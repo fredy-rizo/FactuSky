@@ -1,0 +1,36 @@
+{
+  "name": "new",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "clean": "rm -rf build && mkdir build",
+    "build": "npm run clean && npm run build-server",
+    "dev": "nodemon --exec node src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cloudinary": "^2.10.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.10.0",
+    "mongoose": "^8.7.3",
+    "multer": "1.4.5-lts.1",
+    "mysql2": "^3.23.2",
+    "sharp": "^0.35.3",
+    "socket.io": "4.8.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^26.1.2",
+    "concurrently": "^9.1.0",
+    "morgan": "^1.10.0",
+    "nodemon": "^3.0.1"
+  }
+}

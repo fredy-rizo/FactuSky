@@ -1,0 +1,45 @@
+import mongoose from "mongoose";
+const { Schema } = mongoose;
+
+const roleSchema = new Schema(
+  {
+    company: {
+      type: Schema.Types.ObjectId,
+      ref: "companies",
+    },
+    name: {
+      type: String,
+      trim: true,
+    },
+    code: {
+      type: String,
+      trim: true,
+      lowercase: true,
+    },
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    permissions: [
+      {
+        type: String,
+        trim: true,
+        lowercase: true,
+      },
+    ],
+    active: { type: Boolean, default: false },
+    system: { type: Boolean, default: false },
+  },
+  {
+    timestamps: true,
+    versionKey: false,
+  },
+);
+
+roleSchema.index({
+  company: 1,
+  code: 1,
+});
+
+export const Role = mongoose.model("roles", roleSchema);
