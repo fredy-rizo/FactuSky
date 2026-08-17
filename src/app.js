@@ -18,6 +18,7 @@ import Payment from "./core/MySQL/payment/routes/payment.routes.js";
 import Product from "./core/MySQL/products/routes/products.routes.js";
 import Customer from "./core/MySQL/terceros/customers/routes/customer.routes.js";
 import Supplier from "./core/MySQL/terceros/suppliers/routes/supplier.routes.js";
+import Warehouses from "./core/MySQL/warehouses/routes/warehouses.routes.js";
 
 const app = express();
 console.log(config);
@@ -47,5 +48,6 @@ app.use("/api/payment", Payment);
 app.use("/api/product", Product);
 app.use("/api/third-parties/customer", Customer);
 app.use("/api/third-parties/supplier", Supplier);
+app.use("/api/warehouses", Warehouses);
 
 export default app;
