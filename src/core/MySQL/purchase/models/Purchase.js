@@ -95,6 +95,16 @@ export class Purchase {
             item.total,
           ],
         );
+
+        await connection.execute(
+          `
+          UPDATE inventory
+          SET quantity = quantity + ?
+          WHERE product_id = ?
+            AND warehouse_id = ?
+          `,
+          [item.quantity, item.product_id, warehouse_id],
+        );
       }
 
       await connection.commit();
