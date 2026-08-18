@@ -21,7 +21,7 @@ import Supplier from "./core/MySQL/terceros/suppliers/routes/supplier.routes.js"
 import Warehouses from "./core/MySQL/warehouses/routes/warehouses.routes.js";
 import Inventory from "./core/MySQL/inventory/routes/inventory.routes.js";
 import InventoryMovement from "./core/MySQL/inventoty_movement/routes/inventory_movements.routes.js";
-import Purchase from "./core/MySQL/purchases/purchase/routes/purchase.routes.js";
+import Purchase from "./core/MySQL/purchase/routes/purchase.routes.js";
 
 const app = express();
 console.log(config);

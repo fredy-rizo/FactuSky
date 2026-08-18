@@ -2,8 +2,8 @@ import { Router } from "express";
 import {
   TokenAny,
   TokenPermissions,
-} from "../../../../../middleware/tools/segurity.js";
-import { Paginate } from "../../../../../middleware/utils/paginate.js";
+} from "../../../../middleware/tools/segurity.js";
+import { Paginate } from "../../../../middleware/utils/paginate.js";
 import {
   cancel_purchase,
   create_purchase,

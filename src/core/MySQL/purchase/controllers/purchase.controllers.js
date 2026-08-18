@@ -1,5 +1,5 @@
 import { Purchase } from "../models/Purchase.js";
-import { Company } from "../../../../Mongo/companies/models/Company.js";
+import { Company } from "../../../Mongo/companies/models/Company.js";
 
 /**
  * @param {import('express').Request} req
