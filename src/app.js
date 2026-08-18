@@ -20,6 +20,7 @@ import Customer from "./core/MySQL/terceros/customers/routes/customer.routes.js"
 import Supplier from "./core/MySQL/terceros/suppliers/routes/supplier.routes.js";
 import Warehouses from "./core/MySQL/warehouses/routes/warehouses.routes.js";
 import Inventory from "./core/MySQL/inventory/routes/inventory.routes.js";
+import InventoryMovement from "./core/MySQL/inventoty_movement/routes/inventory_movements.routes.js";
 
 const app = express();
 console.log(config);
@@ -51,5 +52,6 @@ app.use("/api/third-parties/customer", Customer);
 app.use("/api/third-parties/supplier", Supplier);
 app.use("/api/warehouses", Warehouses);
 app.use("/api/inventory", Inventory);
+app.use("/api/inventory-movememt", InventoryMovement);
 
 export default app;
