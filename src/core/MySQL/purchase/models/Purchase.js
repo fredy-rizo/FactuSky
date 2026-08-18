@@ -203,16 +203,71 @@ export class Purchase {
   }
 
   static async cancel(id, company_id) {
-    const [result] = await db.execute(
-      `
-            UPDAtE purchases
-            SET status = 'cancelled'
-            WHERE id = ?
-            AND company_id = ?
-            AND status IN ('draft','confirmed')
+    const connection = await db.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      const [purchaseRows] = await connection.execute(
+        `
+        SELECT warehouse_id, status
+        FROM purchases
+        WHERE id = ?
+          AND company_id = ?
+          AND status IN ('draft', 'confirmed')
+        LIMIT 1
+        `,
+        [id, company_id],
+      );
+
+      if (!purchaseRows.length) {
+        await connection.rollback();
+        return null;
+      }
+
+      const purchase = purchaseRows[0];
+
+      if (purchase.status === "confirmed") {
+        const [items] = await connection.execute(
+          `
+          SELECT product_id, quantity
+          FROM purchase_items
+          WHERE purchase_id = ?
+          `,
+          [id],
+        );
+
+        for (const item of items) {
+          await connection.execute(
+            `
+            UPDATE inventory
+            SET quantity = quantity - ?
+            WHERE product_id = ?
+              AND warehouse_id = ?
             `,
-      [id, company_id],
-    );
-    return result;
+            [Number(item.quantity), item.product_id, purchase.warehouse_id],
+          );
+        }
+      }
+
+      const [result] = await connection.execute(
+        `
+        UPDATE purchases
+        SET status = 'cancelled'
+        WHERE id = ?
+          AND company_id = ?
+          AND status IN ('draft', 'confirmed')
+        `,
+        [id, company_id],
+      );
+
+      await connection.commit();
+      return result;
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
   }
 }
