@@ -1,33 +1,34 @@
-import { Purchase } from "../models/Purchase.js";
+import { Sale } from "../models/Sale.js";
 import { Company } from "../../../Mongo/companies/models/Company.js";
+import { text } from "express";
 
 /**
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
 
-export const create_purchase = async (req, res) => {
+export const create_sale = async (req, res) => {
   try {
     const {
       company_id,
-      supplier_id,
+      customer_id,
       warehouse_id,
+      payment_method_id,
       invoice_number,
-      purchase_date,
+      sale_date,
       subtotal,
       tax,
       discount,
       total,
-      status,
       payment_status,
       notes,
       user_id,
+      status,
       items,
     } = req.body;
 
     if (
       !company_id ||
-      !supplier_id ||
       !warehouse_id ||
       !items ||
       !Array.isArray(items) ||
@@ -35,43 +36,69 @@ export const create_purchase = async (req, res) => {
     )
       return res.status(400).json({
         status: false,
-        message: "Empresa, proveedor, bodega y productos son requeridos",
+        message: "Empresa, bodega y productos son requeridos",
       });
 
+    const company_data = await Company.findById(company_id);
+    if (!company_data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Empresa no encontrada" });
+
     const calculatedSubtotal = items.reduce(
-      (sum, item) => sum + Number(item.quantity) * Number(item.unit_cost),
+      (sum, item) => sum + Number(item.quantity) * Number(item.unit_price),
+      0,
     );
 
-    const purchaseSubtotal =
+    const saleSubtotal =
       subtotal !== undefined ? Number(subtotal) : calculatedSubtotal;
-    const purchaseTax = tax !== undefined ? Number(tax) : 0;
-    const purchaseDiscount = discount !== undefined ? Number(discount) : 0;
-    const purchaseTotal =
+    const saleTax = tax !== undefined ? Number(tax) : 0;
+    const saleDiscount = discount !== undefined ? Number(discount) : 0;
+    const saleTotal =
       total !== undefined
         ? Number(total)
-        : purchaseSubtotal + purchaseTax - purchaseDiscount;
+        : saleSubtotal + saleTax * saleDiscount;
 
-    const new_purchase = new Purchase({
+    const processedItems = items.map((item) => {
+      const itemSubtotal = Number(item.quantity) * Number(item.unit_price);
+
+      const itemDiscount = Number(item.discount || 0);
+      const itemTax = Number(item.tax || 0);
+      const itemTotal = itemSubtotal + itemTax - itemDiscount;
+
+      return {
+        product_id: item.product_id,
+        quantity: Number(item.quantity),
+        unit_price: Number(item.unit_price),
+        discount: itemDiscount,
+        tax: itemTax,
+        subtotal: itemSubtotal,
+        total: itemTotal,
+      };
+    });
+
+    const new_sale = new Sale({
       company_id,
-      supplier_id,
+      customer_id,
       warehouse_id,
+      payment_method_id,
       invoice_number,
-      purchase_date,
-      subtotal: purchaseSubtotal,
-      tax: purchaseTax,
-      discount: purchaseDiscount,
-      total: purchaseTotal,
+      sale_date,
+      subtotal: saleSubtotal,
+      tax: saleTax,
+      discount: saleDiscount,
+      total: saleTotal,
       status: status || "draft",
       payment_status: payment_status || "pending",
       notes,
       user_id,
-      items,
+      items: processedItems,
     });
 
-    const data = await new_purchase.save();
+    const data = await new_sale.save();
     res
       .status(201)
-      .json({ status: true, message: "Compra creada correctamente", data });
+      .json({ status: true, message: "Venta creada correctamente", data });
   } catch (err) {
     console.log(err);
     res.status(500).json(err);
@@ -83,18 +110,18 @@ export const create_purchase = async (req, res) => {
  * @param {import('express').Response} res
  */
 
-export const lists_purchases = async (req, res) => {
+export const lists_sales = async (req, res) => {
   try {
     const { company_id } = req.params;
 
     const company_data = await Company.findById(company_id);
     if (!company_data)
       return res
-        .status(500)
+        .status(404)
         .json({ status: false, message: "Empresa no encontrada" });
 
-    const cant = await Purchase.count(company_id);
-    const data = await Purchase.findAll(
+    const cant = await Sale.count(company_id);
+    const data = await Sale.findAll(
       company_id,
       req.body.skippag,
       req.body.limit,
@@ -102,7 +129,7 @@ export const lists_purchases = async (req, res) => {
 
     res.status(200).json({
       status: true,
-      message: "Cargando compras...",
+      message: "Cargando ventas...",
       data,
       pagination: {
         pag: req.params.pag,
@@ -121,7 +148,7 @@ export const lists_purchases = async (req, res) => {
  * @param {import('express').Response} res
  */
 
-export const list_purchase = async (req, res) => {
+export const list_sale = async (req, res) => {
   try {
     const { company_id, id } = req.params;
 
@@ -131,13 +158,13 @@ export const list_purchase = async (req, res) => {
         .status(404)
         .json({ status: false, message: "Empresa no encontrada" });
 
-    const data = await Purchase.findById(id, company_id);
+    const data = await Sale.findById(id, company_id);
     if (!data)
       return res
         .status(404)
-        .json({ status: false, message: "Compra no encontrada" });
+        .json({ status: false, message: "Venta no encontrada" });
 
-    res.status(200).json({ status: true, message: "Cargando compra...", data });
+    res.status(200).json({ status: true, message: "Cargando venta...", data });
   } catch (err) {
     console.log(err);
     res.status(500).json(err);
@@ -149,7 +176,7 @@ export const list_purchase = async (req, res) => {
  * @param {import('express').Response} res
  */
 
-export const update_purchase = async (req, res) => {
+export const update_sale = async (req, res) => {
   try {
     const { company_id, id } = req.params;
 
@@ -159,27 +186,24 @@ export const update_purchase = async (req, res) => {
         .status(404)
         .json({ status: false, message: "Empresa no encontrada" });
 
-    const purchase = await Purchase.findById(id, company_id);
-    if (!purchase)
+    const sale = await Sale.findById(id, company_id);
+    if (!sale)
       return res
         .status(404)
-        .json({ status: false, message: "Compra no encontrada" });
+        .json({ status: false, message: "Venta no encontrada" });
 
-    if (purchase.status !== "draft")
+    if (sale.status !== "draft")
       return res.status(400).json({
         status: false,
-        message: "Solo se pueden modificar compras en estado 'draft'",
+        message: "Solo se pueden modificar ventas en estado 'draft'",
       });
 
-    await Purchase.update(id, company_id, req.body);
+    await Sale.update(id, company_id, req.body);
 
-    const data = await Purchase.findById(id, company_id);
-
-    res.status(200).json({
-      status: true,
-      message: "Compra actualizada correctamente",
-      data,
-    });
+    const data = await Sale.findById(id, company_id);
+    res
+      .status(200)
+      .json({ status: true, message: "Venta actualizada correctamente", data });
   } catch (err) {
     console.log(err);
     res.status(500).json(err);
@@ -191,7 +215,7 @@ export const update_purchase = async (req, res) => {
  * @param {import('express').Response} res
  */
 
-export const cancel_purchase = async (req, res) => {
+export const cancel_sale = async (req, res) => {
   try {
     const { company_id, id } = req.params;
 
@@ -201,21 +225,21 @@ export const cancel_purchase = async (req, res) => {
         .status(404)
         .json({ status: false, message: "Empresa no encontrada" });
 
-    const purchase = await Purchase.findById(id, company_id);
-    if (!purchase)
+    const sale = await Sale.findById(id, company_id);
+    if (!sale)
       return res
         .status(404)
-        .json({ status: false, message: "Compra no encontrada" });
+        .json({ status: false, message: "Venta no encontrada" });
 
-    if (!["draft", "confirmed"].includes(purchase.status))
+    if (!["draft", "confirmed"].includes(sale.status))
       return res
         .status(400)
-        .json({ status: false, message: "Esta compra no puede ser cancelada" });
+        .json({ status: false, message: "Esta venta no puede ser cancelada" });
 
-    await Purchase.cancel(id, company_id);
+    await Sale.cancel(id, company_id);
     res
       .status(200)
-      .json({ status: true, message: "Compra cancelada correctamente" });
+      .json({ status: true, message: "Venta cancelada correctamente" });
   } catch (err) {
     console.log(err);
     res.status(500).json(err);
@@ -227,7 +251,7 @@ export const cancel_purchase = async (req, res) => {
  * @param {import('express').Response} res
  */
 
-export const confirm_purchase = async (req, res) => {
+export const confirm_sale = async (req, res) => {
   try {
     const { company_id, id } = req.params;
 
@@ -240,29 +264,29 @@ export const confirm_purchase = async (req, res) => {
       });
     }
 
-    const purchase = await Purchase.findById(id, company_id);
+    const sale = await Sale.findById(id, company_id);
 
-    if (!purchase) {
+    if (!sale) {
       return res.status(404).json({
         status: false,
         message: "Venta no encontrada",
       });
     }
 
-    if (purchase.status !== "draft") {
+    if (sale.status !== "draft") {
       return res.status(400).json({
         status: false,
         message: "Solo se pueden confirmar ventas en estado 'draft'",
       });
     }
 
-    await Purchase.confirm(id, company_id);
+    await Sale.confirm(id, company_id);
 
-    const data = await Purchase.findById(id, company_id);
+    const data = await Sale.findById(id, company_id);
 
     return res.status(200).json({
       status: true,
-      message: "compra confirmada correctamente",
+      message: "Venta confirmada correctamente",
       data,
     });
   } catch (err) {

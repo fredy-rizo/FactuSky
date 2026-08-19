@@ -5,56 +5,56 @@ import {
 } from "../../../../middleware/tools/segurity.js";
 import { Paginate } from "../../../../middleware/utils/paginate.js";
 import {
-  cancel_purchase,
-  confirm_purchase,
-  create_purchase,
-  list_purchase,
-  lists_purchases,
-  update_purchase,
-} from "../controllers/purchase.controllers.js";
+  cancel_sale,
+  confirm_sale,
+  create_sale,
+  list_sale,
+  lists_sales,
+  update_sale,
+} from "../controllers/sale.controllers.js";
 const router = Router();
 
 router.post(
   "/create",
   TokenAny,
-  TokenPermissions("products.create"),
-  create_purchase,
+  TokenPermissions("products.view"),
+  create_sale,
 ); // Crear venta
 
 router.get(
-  "/lists-purchases/:company_id",
+  "/lists-sales/:company_id/:pag?/:perpage?",
   TokenAny,
   TokenPermissions("products.view"),
   Paginate,
-  lists_purchases,
-); // Listar compras
+  lists_sales,
+); // Listar ventas
 
 router.get(
-  "/list-purchase/:company_id/:id",
+  "/list-sale/:company_id/:id",
   TokenAny,
   TokenPermissions("products.view"),
-  list_purchase,
-); // Listar una sola compra
+  list_sale,
+); // Listar una sola venta
 
 router.put(
   "/update/:company_id/:id",
   TokenAny,
   TokenPermissions("products.update"),
-  update_purchase,
-); // Actualizar compra
+  update_sale,
+); // Actualizar venta
 
 router.patch(
   "/cancel/:company_id/:id",
   TokenAny,
   TokenPermissions("products.update"),
-  cancel_purchase,
-); // Compra cancelada
+  cancel_sale,
+); // Cancelar venta
 
 router.patch(
   "/confirm/:company_id/:id",
   TokenAny,
   TokenPermissions("products.update"),
-  confirm_purchase,
-); // Confirmar compra
+  confirm_sale,
+); // Confirmar venta
 
 export default router;

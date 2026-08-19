@@ -22,6 +22,7 @@ import Warehouses from "./core/MySQL/warehouses/routes/warehouses.routes.js";
 import Inventory from "./core/MySQL/inventory/routes/inventory.routes.js";
 import InventoryMovement from "./core/MySQL/inventoty_movement/routes/inventory_movements.routes.js";
 import Purchase from "./core/MySQL/purchase/routes/purchase.routes.js";
+import Sale from "./core/MySQL/sale/routes/sale.routes.js";
 
 const app = express();
 console.log(config);
@@ -55,5 +56,6 @@ app.use("/api/warehouses", Warehouses);
 app.use("/api/inventory", Inventory);
 app.use("/api/inventory-movememt", InventoryMovement);
 app.use("/api/purchase", Purchase);
+app.use("/api/sale", Sale);
 
 export default app;

@@ -1,8 +1,6 @@
-import { ReturnDocument } from "mongodb";
 import { db } from "../../../../database/MySQL/MySQL.js";
-import { concurrency } from "sharp";
 
-export class Purchase {
+export class Sale {
   constructor(data = {}) {
     Object.assign(this, data);
   }
@@ -15,10 +13,11 @@ export class Purchase {
 
       const {
         company_id,
-        supplier_id,
+        customer_id,
         warehouse_id,
+        payment_method_id,
         invoice_number,
-        purchase_date,
+        sale_date,
         subtotal,
         tax,
         discount,
@@ -30,15 +29,16 @@ export class Purchase {
         items,
       } = this;
 
-      const [purchaseResult] = await connection.execute(
+      const [saleResult] = await connection.execute(
         `
-        INSERT INTO purchases
+        INSERT INTO sales
         (
           company_id,
-          supplier_id,
+          customer_id,
           warehouse_id,
+          payment_method_id,
           invoice_number,
-          purchase_date,
+          sale_date,
           subtotal,
           tax,
           discount,
@@ -48,14 +48,15 @@ export class Purchase {
           notes,
           user_id
         )
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         [
           company_id,
-          supplier_id,
+          customer_id || null,
           warehouse_id,
+          payment_method_id || null,
           invoice_number || null,
-          purchase_date || new Date(),
+          sale_date || new Date(),
           subtotal,
           tax,
           discount,
@@ -67,17 +68,17 @@ export class Purchase {
         ],
       );
 
-      const purchase_id = purchaseResult.insertId;
+      const sale_id = saleResult.insertId;
 
       for (const item of items) {
         await connection.execute(
           `
-          INSERT INTO purchase_items
+          INSERT INTO sale_items
           (
-            purchase_id,
+            sale_id,
             product_id,
             quantity,
-            unit_cost,
+            unit_price,
             discount,
             tax,
             subtotal,
@@ -86,10 +87,10 @@ export class Purchase {
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
           `,
           [
-            purchase_id,
+            sale_id,
             item.product_id,
             item.quantity,
-            item.unit_cost,
+            item.unit_price,
             item.discount || 0,
             item.tax || 0,
             item.subtotal,
@@ -99,7 +100,8 @@ export class Purchase {
       }
 
       await connection.commit();
-      return await Purchase.findById(purchase_id, company_id);
+
+      return await Sale.findById(sale_id, company_id);
     } catch (err) {
       await connection.rollback();
       throw err;
@@ -114,10 +116,10 @@ export class Purchase {
     try {
       await connection.beginTransaction();
 
-      const [purchaseRows] = await connection.execute(
+      const [saleRows] = await connection.execute(
         `
         SELECT warehouse_id, status
-        FROM purchases
+        FROM sales
         WHERE id = ?
           AND company_id = ?
           AND status = 'draft'
@@ -126,12 +128,12 @@ export class Purchase {
         [id, company_id],
       );
 
-      if (!purchaseRows) {
+      if (!saleRows) {
         await connection.rollback();
         return null;
       }
 
-      const purchase = purchaseRows[0];
+      const sale = saleRows[0];
 
       const [items] = await connection.execute(
         `
@@ -151,7 +153,12 @@ export class Purchase {
             AND warehouse_id = ?
             AND quantity >= ?
           `,
-          [Number(item.quantity), purchase.warehouse_id, Number(item.quantity)],
+          [
+            Number(item.quantity),
+            item.product_id,
+            sale.warehouse_id,
+            Number(item.quantity),
+          ],
         );
 
         if (result.affectedRows === 0) {
@@ -163,7 +170,7 @@ export class Purchase {
 
       const [result] = await connection.execute(
         `
-        UPDATE purchases
+        UPDATE sales
         SET status = "confirmed"
         WHERE id = ?
           AND company_id = ?
@@ -171,7 +178,6 @@ export class Purchase {
         `,
         [id, company_id],
       );
-
       await connection.commit();
       return result;
     } catch (err) {
@@ -183,34 +189,35 @@ export class Purchase {
   }
 
   static async findById(id, company_id) {
-    const [purchaseRows] = await db.execute(
+    const [saleRows] = await db.execute(
       `
-            SELECT *
-            FROM purchases
-            WHERE id = ?
-            AND company_id = ?
-            LIMIT 1
-            `,
+      SELECT *
+      FROM sales
+      WHERE id = ?
+      AND company_id = ?
+      LIMIT 1
+      `,
       [id, company_id],
     );
 
-    if (!purchaseRows.length) return null;
+    if (!saleRows.length) return null;
 
     const [items] = await db.execute(
       `
       SELECT
-          pi.*,
-          p.name AS product_name
-      FROM purchase_items pi
+        si.*,
+        p.name AS product_name
+      FROM sale_items si
       INNER JOIN products p
-          ON p.id = pi.product_id
-      WHERE pi.purchase_id = ?
-      ORDER BY pi.id ASC
-            `,
+        ON p.id = si.product_id
+      WHERE si.sale_id = ?
+      ORDER BY si.id ASC
+      `,
       [id],
     );
+
     return {
-      ...purchaseRows[0],
+      ...saleRows[0],
       items,
     };
   }
@@ -218,52 +225,69 @@ export class Purchase {
   static async findAll(company_id) {
     const [rows] = await db.execute(
       `
-            SELECT *
-            FROM purchases
-            WHERE company_id = ?
-            ORDER BY id DESC
-            `,
+      SELECT *
+      FROM sales
+      WHERE company_id = ?
+      ORDER BY id DESC
+      `,
       [company_id],
     );
+
     return rows;
   }
 
   static async count(company_id) {
     const [rows] = await db.execute(
       `
-            SELECT COUNT(*) AS count
-            FROM purchases
-            WHERE company_id = ?
-            `,
+      SELECT COUNT(*) AS count
+      FROM sales
+      WHERE company_id = ?
+      `,
       [company_id],
     );
+
     return Number(rows[0].count);
   }
 
   static async update(id, company_id, data) {
-    const { invoice_number, purchase_date, notes, payment_status } = data;
+    const {
+      customer_id,
+      warehouse_id,
+      payment_method_id,
+      invoice_number,
+      sale_date,
+      notes,
+      payment_status,
+    } = data;
 
     const [result] = await db.execute(
       `
-            UPDATE purchases
-            SET
-                invoice_number = ?,
-                purchase_date = ?,
-                notes= ?,
-                payment_status = ?
-            WHERE id = ?
-            AND company_id = ?
-            AND status = 'draft'
-            `,
+      UPDATE sales
+      SET
+        customer_id = ?,
+        warehouse_id = ?,
+        payment_method_id = ?,
+        invoice_number = ?,
+        sale_date = ?,
+        notes = ?,
+        payment_status = ?
+      WHERE id = ?
+      AND company_id = ?
+      AND status = 'draft'
+      `,
       [
+        customer_id || null,
+        warehouse_id,
+        payment_method_id || null,
         invoice_number || null,
-        purchase_date,
+        sale_date,
         notes || null,
         payment_status || "pending",
         id,
         company_id,
       ],
     );
+
     return result;
   }
 
@@ -273,31 +297,31 @@ export class Purchase {
     try {
       await connection.beginTransaction();
 
-      const [purchaseRows] = await connection.execute(
+      const [saleRows] = await connection.execute(
         `
         SELECT warehouse_id, status
-        FROM purchases
+        FROM sales
         WHERE id = ?
           AND company_id = ?
-          AND status IN ('draft', 'confirmed')
+          AND status IN('draft','confirmed')
         LIMIT 1
         `,
         [id, company_id],
       );
 
-      if (!purchaseRows.length) {
+      if (!saleRows.length) {
         await connection.rollback();
         return null;
       }
 
-      const purchase = purchaseRows[0];
+      const sale = saleRows[0];
 
-      if (purchase.status === "confirmed") {
+      if (sale.status === "confirmed") {
         const [items] = await connection.execute(
           `
           SELECT product_id, quantity
-          FROM purchase_items
-          WHERE purchase_id = ?
+          FROM sales_items
+          WHERE sale_id = ?
           `,
           [id],
         );
@@ -306,22 +330,23 @@ export class Purchase {
           await connection.execute(
             `
             UPDATE inventory
-            SET quantity = quantity - ?
+            SET quantity = quantity + ?
             WHERE product_id = ?
               AND warehouse_id = ?
+              AND status IN('draft','confirmed')
             `,
-            [Number(item.quantity), item.product_id, purchase.warehouse_id],
+            [Number(item.quantity), item.product_id, sale.warehouse_id],
           );
         }
       }
 
       const [result] = await connection.execute(
         `
-        UPDATE purchases
+        UPDATE sales
         SET status = 'cancelled'
         WHERE id = ?
           AND company_id = ?
-          AND status IN ('draft', 'confirmed')
+          AND status IN('draft','confirmed')
         `,
         [id, company_id],
       );
