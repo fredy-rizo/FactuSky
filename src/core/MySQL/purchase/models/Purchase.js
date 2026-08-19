@@ -1,6 +1,4 @@
-import { ReturnDocument } from "mongodb";
 import { db } from "../../../../database/MySQL/MySQL.js";
-import { concurrency } from "sharp";
 
 export class Purchase {
   constructor(data = {}) {
