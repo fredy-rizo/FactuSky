@@ -16,14 +16,14 @@ const router = Router();
 router.post(
   "/create",
   TokenAny,
-  TokenPermissions("products.views"),
+  TokenPermissions("suppliers", "views"),
   create_supplier,
 ); // Crear proveedor
 
 router.get(
   "/list-suppliers/:company_id/:pag?/:perpage?",
   TokenAny,
-  TokenPermissions("products.view"),
+  TokenPermissions("suppliers", "view"),
   Paginate,
   list_suppliers,
 ); // Listar proveedores
@@ -31,21 +31,21 @@ router.get(
 router.get(
   "/list-supplier/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.view"),
+  TokenPermissions("suppliers", "view"),
   list_supplier,
 ); // Listar un solo proveedor
 
 router.put(
   "/update/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.update"),
+  TokenPermissions("suppliers", "update"),
   update_supplier,
 ); // Actualizar proveedor
 
 router.delete(
   "/remove/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.delete"),
+  TokenPermissions("suppliers", "delete"),
   remove_supplier,
 ); // Eliminar proveedor
 

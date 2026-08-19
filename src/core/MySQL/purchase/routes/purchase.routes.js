@@ -17,14 +17,14 @@ const router = Router();
 router.post(
   "/create",
   TokenAny,
-  TokenPermissions("products.create"),
+  TokenPermissions("purchases", "create"),
   create_purchase,
 ); // Crear venta
 
 router.get(
   "/lists-purchases/:company_id",
   TokenAny,
-  TokenPermissions("products.view"),
+  TokenPermissions("purchases", "view"),
   Paginate,
   lists_purchases,
 ); // Listar compras
@@ -32,28 +32,28 @@ router.get(
 router.get(
   "/list-purchase/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.view"),
+  TokenPermissions("purchases", "view"),
   list_purchase,
 ); // Listar una sola compra
 
 router.put(
   "/update/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.update"),
+  TokenPermissions("purchases", "update"),
   update_purchase,
 ); // Actualizar compra
 
 router.patch(
   "/cancel/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.update"),
+  TokenPermissions("purchases", "update"),
   cancel_purchase,
 ); // Compra cancelada
 
 router.patch(
   "/confirm/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.update"),
+  TokenPermissions("purchases", "update"),
   confirm_purchase,
 ); // Confirmar compra
 

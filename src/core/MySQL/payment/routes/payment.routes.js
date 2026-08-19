@@ -16,14 +16,14 @@ const router = Router();
 router.post(
   "/create",
   TokenAny,
-  TokenPermissions("products.create"),
+  TokenPermissions("payment_methods", "create"),
   create_payment,
 ); // Crear metodos de pago
 
 router.get(
   "/list-payments/:company_id/:pag?/:perpage?",
   TokenAny,
-  TokenPermissions("products.view"),
+  TokenPermissions("payment_methods", "view"),
   Paginate,
   list_payments,
 ); // Listar metodos de pago
@@ -31,21 +31,21 @@ router.get(
 router.get(
   "/list-payment/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.view"),
+  TokenPermissions("payment_methods", "view"),
   list_payment,
 ); // Listar un solo metodo de pago
 
 router.put(
   "/update/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.update"),
+  TokenPermissions("payment_methods", "update"),
   update_payment,
 ); // Actualizar metodo de pago
 
 router.delete(
   "/remove/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.remove"),
+  TokenPermissions("payment_methods", "delete"),
   remove_payment,
 ); // Eliminar metodo de pago
 

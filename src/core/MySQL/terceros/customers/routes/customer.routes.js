@@ -16,14 +16,14 @@ const router = Router();
 router.post(
   "/create",
   TokenAny,
-  TokenPermissions("products.create"),
+  TokenPermissions("customers", "create"),
   create_customers,
 ); // Crear clientes
 
 router.get(
   "/lists/:company_id/:pag?/:perpage?",
   TokenAny,
-  TokenPermissions("products.view"),
+  TokenPermissions("customers", "view"),
   Paginate,
   list_customers,
 ); // Listar clientes
@@ -31,21 +31,21 @@ router.get(
 router.get(
   "/list/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.view"),
+  TokenPermissions("customers", "view"),
   list_customer,
 ); // Listar un solo cliente
 
 router.put(
   "/update/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.update"),
+  TokenPermissions("customers", "update"),
   update_customer,
 ); // Actualizar cliente
 
 router.delete(
   "/remove/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.delete"),
+  TokenPermissions("customers", "delete"),
   remove_customer,
 ); // Eliminar cliente
 

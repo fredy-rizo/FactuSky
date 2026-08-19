@@ -16,14 +16,14 @@ const router = Router();
 router.post(
   "/create",
   TokenAny,
-  TokenPermissions("products.create"),
+  TokenPermissions("products", "create"),
   create_product,
 ); // Crear productos
 
 router.get(
   "/list/:company_id/:pag?/:perpage?",
   TokenAny,
-  TokenPermissions("products.view"),
+  TokenPermissions("products", "view"),
   Paginate,
   list_products,
 ); // Listar productos
@@ -31,21 +31,21 @@ router.get(
 router.get(
   "/list-product/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.view"),
+  TokenPermissions("products", "view"),
   list_product,
 ); // Listar un solo producto
 
 router.put(
   "/update/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.update"),
+  TokenPermissions("products", "update"),
   update_product,
 ); // Actualizar producto
 
 router.delete(
   "/remove/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.delete"),
+  TokenPermissions("products", "delete"),
   remove_product,
 ); // Eliminar producto
 

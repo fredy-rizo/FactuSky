@@ -16,14 +16,14 @@ const router = Router();
 router.post(
   "/create",
   TokenAny,
-  TokenPermissions("products.create"),
+  TokenPermissions("products", "create"),
   create_category,
 ); // Crear categoria
 
 router.get(
   "/lists-categorys/:company_id/:pag?/:perpage?",
   TokenAny,
-  TokenPermissions("products.view"),
+  TokenPermissions("products", "view"),
   Paginate,
   list_categorys,
 ); // Listar categorias de empresa
@@ -31,21 +31,21 @@ router.get(
 router.get(
   "/list/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.view"),
+  TokenPermissions("products", "view"),
   list_category,
 ); // Listar una sola categoria
 
 router.put(
   "/update/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.update"),
+  TokenPermissions("products", "update"),
   update_category,
 ); // Actualizar categoria
 
 router.delete(
   "/remove/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.delete"),
+  TokenPermissions("products", "delete"),
   remove_category,
 ); // Eliminar categoria
 

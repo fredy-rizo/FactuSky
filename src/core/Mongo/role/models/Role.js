@@ -21,13 +21,11 @@ const roleSchema = new Schema(
       default: "",
       trim: true,
     },
-    permissions: [
-      {
-        type: String,
-        trim: true,
-        lowercase: true,
-      },
-    ],
+    access: {
+      type: Map,
+      of: [String],
+      default: {},
+    },
     active: { type: Boolean, default: false },
     system: { type: Boolean, default: false },
   },

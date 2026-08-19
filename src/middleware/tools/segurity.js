@@ -56,9 +56,11 @@ export const TokenAny = async (req, res, next) => {
       req.user = {
         _id: user._id,
         type: "user",
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
         role: user.role,
         active: user.active,
-        permissions: user.permissions || [],
         data: user,
       };
       return next();
@@ -66,14 +68,13 @@ export const TokenAny = async (req, res, next) => {
 
     const company_user = await CompanyUser.findById(decoded._id)
       .populate("company", "name active")
-      .populate("role", "name code permissions active");
+      .populate("role", "name code access active system");
     if (company_user) {
       req.user = {
         _id: company_user._id,
         type: "company_user",
         company: company_user.company,
         role: company_user.role,
-        permissions: company_user.role?.permissions || [],
         active: company_user.active,
         data: company_user,
       };
@@ -106,7 +107,13 @@ export const TokenAuthorize = (...role) => {
 
       if (!role.length) return next();
 
-      if (role.includes(req.user.role)) return next();
+      if (req.user.type === "user" && req.user.role === "super admin")
+        return next();
+
+      const userRole =
+        typeof req.user.role === "string" ? req.user.role : req.user.role?.code;
+
+      if (role.includes(userRole)) return next();
 
       return res
         .statu(403)
@@ -142,17 +149,38 @@ export const TokenPermissions = (...permissions) => {
         return next();
       }
 
-      // CompanyUser
-      const has_permissions = permissions.every((permission) =>
-        (req.user.permissions || []).includes(permission),
-      );
+      // CompanyUser && otros roles
+      if (
+        req.user.type === "company_iser" &&
+        req.user.role?.code === "administrador"
+      )
+        return next();
 
-      if (!has_permissions) {
-        return res.status(403).json({
+      if (req.user.type !== "company_user")
+        return res
+          .status(403)
+          .json({ status: false, message: "No tienes acceso a este recurso" });
+
+      const access = req.user.role?.access;
+      if (!access)
+        return res
+          .statu(403)
+          .json({
+            status: false,
+            message: "El rol no tiene accesos configurados",
+          });
+
+      const moduleAccess = access[module];
+      if (!moduleAccess)
+        return res.status({
           status: false,
-          message: "No tienes permisos suficientes",
+          message: "No tienes acceso a este modulo",
         });
-      }
+
+      if (!moduleAccess.includes(action))
+        return res
+          .status(403)
+          .json({ status: false, message: "No tienes permisos suficientes" });
 
       return next();
     } catch (err) {

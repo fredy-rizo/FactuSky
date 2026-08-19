@@ -14,14 +14,14 @@ const router = Router();
 router.post(
   "/create",
   TokenAny,
-  TokenPermissions("products.create"),
+  TokenPermissions("inventory", "create"),
   create_inventory_movements,
 ); // Crear movimiento de inventario
 
 router.get(
   "/lists-inventorys-movememts/:company_id/:pag?/:perpage?",
   TokenAny,
-  TokenPermissions("products.view"),
+  TokenPermissions("inventory", "view"),
   Paginate,
   lists_inventorys_movememts,
 ); // Listar movimientos de inventario
@@ -29,7 +29,7 @@ router.get(
 router.get(
   "/list-inventory-movememt/:company_id/:id",
   TokenAny,
-  TokenPermissions("products.view"),
+  TokenPermissions("inventory", "view"),
   list_inventory_movememt,
 ); // Listar un solo movimiento
 

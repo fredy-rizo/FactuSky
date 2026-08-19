@@ -8,7 +8,7 @@ import { Company } from "../../companies/models/Company.js";
 
 export const create_role = async (req, res) => {
   try {
-    const { company, name, code, description, permissions, active, system } =
+    const { company, name, code, description, access, active, system } =
       req.body;
 
     if (!company || !name || !code)
@@ -33,7 +33,7 @@ export const create_role = async (req, res) => {
       name,
       code,
       description,
-      permissions,
+      access,
       active,
       system,
     });
@@ -163,12 +163,10 @@ export const change_role_status = async (req, res) => {
         .json({ status: false, message: "Rol no encontrado" });
 
     if (role.system)
-      return res
-        .status(403)
-        .json({
-          status: false,
-          message: "Los roles del sistema no pueden desactivarse",
-        });
+      return res.status(403).json({
+        status: false,
+        message: "Los roles del sistema no pueden desactivarse",
+      });
 
     await Role.updateOne(
       { _id: role_id },
@@ -179,12 +177,10 @@ export const change_role_status = async (req, res) => {
       },
     );
 
-    res
-      .status(200)
-      .json({
-        status: true,
-        message: `Rol ${role.active ? "desactivado" : "activado"} correctamente`,
-      });
+    res.status(200).json({
+      status: true,
+      message: `Rol ${role.active ? "desactivado" : "activado"} correctamente`,
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json(err);
