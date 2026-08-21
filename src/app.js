@@ -14,7 +14,7 @@ import CompanyUser from "./core/Mongo/companyUser/routes/companyUser.routes.js";
 //? MySQL
 import Category from "./core/MySQL/category/routes/category.routes.js";
 import Unit from "./core/MySQL/unit/routes/unit.routes.js";
-import Payment from "./core/MySQL/payment/routes/payment.routes.js";
+import Payment from "./core/MySQL/payment_methods/routes/payment.routes.js";
 import Product from "./core/MySQL/products/routes/products.routes.js";
 import Customer from "./core/MySQL/terceros/customers/routes/customer.routes.js";
 import Supplier from "./core/MySQL/terceros/suppliers/routes/supplier.routes.js";
