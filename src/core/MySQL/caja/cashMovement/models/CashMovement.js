@@ -28,7 +28,7 @@ export class CashMovement {
       FROM cash_openings
       WHERE id = ?
       AND company_id = ?
-      AND status = 'status'
+      AND status = 'open'
       LIMIT 1
       `,
       [cash_opening_id, company_id],

@@ -25,6 +25,7 @@ import Purchase from "./core/MySQL/purchase/routes/purchase.routes.js";
 import Sale from "./core/MySQL/sale/routes/sale.routes.js";
 import CashRegister from "./core/MySQL/caja/cashRegister/routes/cash.registers.routes.js";
 import CashOpening from "./core/MySQL/caja/cashOpening/routes/cash.opening.routes.js";
+import CashMovement from "./core/MySQL/caja/cashMovement/routes/cash.movement.routes.js";
 
 const app = express();
 console.log(config);
@@ -61,5 +62,6 @@ app.use("/api/purchase", Purchase);
 app.use("/api/sale", Sale);
 app.use("/api/cash-registers", CashRegister);
 app.use("/api/cash-opening", CashOpening);
+app.use("/api/cash-movement", CashMovement);
 
 export default app;
