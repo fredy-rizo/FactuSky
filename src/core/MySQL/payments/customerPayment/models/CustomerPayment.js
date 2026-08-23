@@ -54,7 +54,7 @@ export class CustomerPayment {
                 FROM payment_methods
                 WHERE id = ?
                 AND company_id = ?
-                AND status = 'active'
+                AND active = true
                 LIMIT 1
                 `,
         [payment_method_id, company_id],
@@ -181,18 +181,18 @@ export class CustomerPayment {
   static async findById(id, company_id) {
     const [rows] = await db.execute(
       `
-        SELECT
-            cp.*,
-            c.name AS customer_name,
-            pm.name AS payment_method_name
-        FROM customer_payments cp
-        INNER JOIN customers c
-            ON c.id = cp.customer_id
-        INNER JOIN payment_methods pm
-            ON pm.id = cp.payment_method_id
-        WHERE cp.id = ?
-        AND cp.company_id = ?
-        LIMIT 1
+      SELECT
+        cp.*,
+        c.first_name AS customer_name,
+        pm.name AS payment_method_name
+      FROM customer_payments cp
+      INNER JOIN customers c
+        ON c.id = cp.customer_id
+      INNER JOIN payment_methods pm
+        ON pm.id = cp.payment_method_id
+      WHERE cp.id = ?
+      AND cp.company_id = ?
+      LIMIT 1
         `,
       [id, company_id],
     );
@@ -202,16 +202,16 @@ export class CustomerPayment {
   static async findByAccount(account_receivable_id, company_id) {
     const [rows] = await db.execute(
       `
-        SET
-            cp.*,
-            pm.name AS payment_method_name
-        FROM customer_payments cp
-        INNER JOIN payment_methods pm
-            ON pm.id = cp.payment_method_id
-        WHERE cp.account_receivable_id = ?
-        AND cp.company_id = ?
-        AND cp.status = 'completed'
-        ORDER BY cp.payment_date ASC
+      SELECT
+        cp.*,
+        pm.name AS payment_method_name
+      FROM customer_payments cp
+      INNER JOIN payment_methods pm
+        ON pm.id = cp.payment_method_id
+      WHERE cp.account_receivable_id = ?
+      AND cp.company_id = ?
+      AND cp.status = 'completed'
+      ORDER BY cp.payment_date ASC
         `,
       [account_receivable_id, company_id],
     );
