@@ -115,4 +115,121 @@ export class AccountPayable {
     );
     return rows;
   }
+
+  static async findAll(company_id) {
+    const [rows] = await db.execute(
+      `
+      SELECT
+        ap.*,
+        s.first_name AS supplier_name
+      FROM accounts_suppliers s
+        ON s.id = ap.supplier_id
+      WHERE ap.company_id = ?
+      ORDER BY ap.id DESC
+      `,
+      [company_id],
+    );
+    return rows;
+  }
+
+  static async findBySupplier(supplier_id, company_id) {
+    const [rows] = await db.execute(
+      `
+      SELECT
+      FROM accounts_payable
+      WHERE supplier_id = ?
+      AND company_id = ?
+      AND status IN('pending','partil','overdue')
+      ORDER BY due_date ASC, id ASC
+      `,
+      [supplier_id, company_id],
+    );
+    return rows;
+  }
+
+  static async updateOverdue(company_id) {
+    const [result] = await db.execute(
+      `
+      UPDATE accounts_payable
+      SET status = 'overdue'
+      WHERE company_id = ?
+      AND due_date < CURDATE()
+      AND pending_amount > 0
+      AND status IN ('pending,'partial')
+      `,
+      [company_id],
+    );
+    return result;
+  }
+
+  static async cancel(id, company_id) {
+    const [result] = await db.execute(
+      `
+      UPDATE accounts_payable
+      SET status = 'cancelled'
+      WHERE id = ?
+      AND company_id = ?
+      AND paid_amount = 0
+      AND status IN('pending','overdue')
+      `,
+      [id, company_id],
+    );
+    return result;
+  }
+
+  static async summary(company_id) {
+    const [rows] = await db.execute(
+      `
+      SELECT
+        COALESCE(
+          SUM(
+            CASE
+              WHEN status != 'cancelled'
+              THEN pending_amount
+              ELSE 0
+            END
+          ),
+          0
+        ) AS total_pending
+
+        COALESCE(
+          SUM(
+            CASE
+              WHEN status != 'overdue'
+              THEN pending_amount
+              ELSE 0
+            AND
+          ),
+          0 
+        ) AS total_overdue,
+
+        COUNT(
+          CASE
+            WHEN status IN ('pending','partial','overdue')
+            THEN 1
+          END
+        ) AS open_accounts
+      FROM accounts_payable
+      WHERE company_id = ?
+      `,
+      [company_id],
+    );
+    return {
+      total_pending: Number(rows[0].total_pending),
+      total_overdue: Number(rows[0].total_overdue),
+      open_accounts: Number(rows[0].open_accounts),
+    };
+  }
+
+  static async count(company_id) {
+    const [rows] = await db.execute(
+      `
+      SELECT COUNT(*) AS total
+      FROM accounts_payable
+      WHERE company_id = ?
+      `,
+      [company_id],
+    );
+    return rows[0].total;
+  }
 }
