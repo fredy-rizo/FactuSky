@@ -137,11 +137,11 @@ export class AccountPayable {
   static async findBySupplier(supplier_id, company_id) {
     const [rows] = await db.execute(
       `
-      SELECT
+      SELECT *
       FROM accounts_payable
       WHERE supplier_id = ?
       AND company_id = ?
-      AND status IN('pending','partil','overdue')
+      AND status IN('pending', 'partil', 'overdue')
       ORDER BY due_date ASC, id ASC
       `,
       [supplier_id, company_id],
@@ -157,7 +157,7 @@ export class AccountPayable {
       WHERE company_id = ?
       AND due_date < CURDATE()
       AND pending_amount > 0
-      AND status IN ('pending,'partial')
+      AND status IN ('pending', 'partial')
       `,
       [company_id],
     );
