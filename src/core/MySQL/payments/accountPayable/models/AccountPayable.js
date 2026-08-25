@@ -20,7 +20,7 @@ export class AccountPayable {
         due_date,
         original_amount,
         notes,
-      } = notes;
+      } = this;
 
       const amount = Number(original_amount);
       if (amount <= 0)
@@ -28,7 +28,7 @@ export class AccountPayable {
           "El valor de la cuenta por pagar dee ser mayor que cero",
         );
 
-      const { supplierRows } = await connection.execute(
+      const [supplierRows] = await connection.execute(
         `
                 SELECT id
                 FROM suppliers
@@ -60,21 +60,21 @@ export class AccountPayable {
 
       const [result] = await connection.execute(
         `
-                INSERT INTO accounts_payable
-                (
-                    company_id,
-                    supplier_id,
-                    reference_type,
-                    reference_id,
-                    issue_date,
-                    due_date,
-                    original_amount,
-                    pending_amount,
-                    status,
-                    notes
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
-                `,
+        INSERT INTO accounts_payable
+        (
+          company_id,
+          supplier_id,
+          reference_type,
+          reference_id,
+          issue_date,
+          due_date,
+          original_amount,
+          pending_amount,
+          status,
+          notes
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+        `,
         [
           company_id,
           supplier_id,
@@ -83,7 +83,6 @@ export class AccountPayable {
           issue_date || new Date(),
           due_date || null,
           amount,
-          0,
           amount,
           notes || null,
         ],
@@ -108,10 +107,11 @@ export class AccountPayable {
         FROM accounts_payable ap
         INNER JOIN suppliers s
             ON s.id = ap.supplier_id
-        WHERE ap.company_id = ?
+        WHERE ap.id = ?
+          AND ap.company_id = ?
         ORDER BY ap.id DESC
         `,
-      [company_id],
+      [id, company_id],
     );
     return rows;
   }
@@ -119,16 +119,18 @@ export class AccountPayable {
   static async findAll(company_id) {
     const [rows] = await db.execute(
       `
-      SELECT
-        ap.*,
-        s.first_name AS supplier_name
-      FROM accounts_suppliers s
-        ON s.id = ap.supplier_id
-      WHERE ap.company_id = ?
-      ORDER BY ap.id DESC
-      `,
+    SELECT
+      ap.*,
+      s.first_name AS supplier_name
+    FROM accounts_payable ap
+    INNER JOIN suppliers s
+      ON s.id = ap.supplier_id
+    WHERE ap.company_id = ?
+    ORDER BY ap.id DESC
+    `,
       [company_id],
     );
+
     return rows;
   }
 
