@@ -7,6 +7,7 @@ import { Paginate } from "../../../../../middleware/utils/paginate.js";
 import {
   create_supplier_payment,
   supplier_payments_by_account,
+  supplier_payments_by_supplier,
 } from "../controllers/supplier.payment.controllers.js";
 const router = Router();
 
@@ -24,5 +25,13 @@ router.get(
   Paginate,
   supplier_payments_by_account,
 ); // Ver pagos de una cuenta por pagar
+
+router.get(
+  "/:company_id/supplier/:supplier_id/:pag?/:perpage?",
+  TokenAny,
+  TokenPermissions("accounts_payable", "view"),
+  Paginate,
+  supplier_payments_by_supplier,
+); // Cargando historial de pagos
 
 export default router;
