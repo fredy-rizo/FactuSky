@@ -1,4 +1,3 @@
-import { concurrency } from "sharp";
 import { db } from "../../.../../../../../database/MySQL/MySQL.js";
 
 export class SupplierPayment {
@@ -19,6 +18,7 @@ export class SupplierPayment {
         cash_opening_id,
         user_id,
         amount,
+        supplier_id,
         payment_date,
         reference,
         notes,
@@ -55,7 +55,7 @@ export class SupplierPayment {
         FROM payment_methods
         WHERE id = ?
         AND company_id = ?
-        AND status = 'active'
+        AND active = true
         LIMIT 1
         `,
         [payment_method_id, company_id],

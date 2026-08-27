@@ -30,6 +30,7 @@ import CashClosure from "./core/MySQL/caja/cashClosure/routes/cash.closure.route
 import AccountReceivable from "./core/MySQL/payments/accountReceivable/routes/account.receivable.routes.js";
 import CustomerPayment from "./core/MySQL/payments/customerPayment/routes/customer.routes.js";
 import AccountPayable from "./core/MySQL/payments/accountPayable/routes/account.payable.routes.js";
+import SupplierPayment from "./core/MySQL/payments/supplierPayment/routes/supplier.payment.routes.js";
 
 const app = express();
 console.log(config);
@@ -71,5 +72,6 @@ app.use("/api/cash-closure", CashClosure);
 app.use("/api/account-receivable", AccountReceivable);
 app.use("/api/customer-payment", CustomerPayment);
 app.use("/api/account-payable", AccountPayable);
+app.use("/api/supplier-payment", SupplierPayment);
 
 export default app;
