@@ -108,7 +108,7 @@ export class Quotation {
       `
             SELECT *
             FROM quotations
-            WHERE = ?
+            WHERE id = ?
             AND company_id = ?
             LIMIT 1
             `,
@@ -118,13 +118,14 @@ export class Quotation {
 
     const [items] = await db.execute(
       `
-            SELECT
-                qi.*,
-                p.name AS product_name
-            FROM quotation_items pi
-                ON p.id = qi.product_id
-            WHERE qi.quotation_id = ?
-            ORDER BY qi.id ASC
+      SELECT
+        qi.*,
+        p.name AS product_name
+      FROM quotation_items qi
+      INNER JOIN products p
+        ON p.id = qi.product_id
+      WHERE qi.quotation_id = ?
+      ORDER BY qi.id ASC
             `,
       [id],
     );

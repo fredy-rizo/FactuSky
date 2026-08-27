@@ -31,6 +31,7 @@ import AccountReceivable from "./core/MySQL/payments/accountReceivable/routes/ac
 import CustomerPayment from "./core/MySQL/payments/customerPayment/routes/customer.routes.js";
 import AccountPayable from "./core/MySQL/payments/accountPayable/routes/account.payable.routes.js";
 import SupplierPayment from "./core/MySQL/payments/supplierPayment/routes/supplier.payment.routes.js";
+import Quotation from "./core/MySQL/commercial_sales/quotions/routes/quotation.routes.js";
 
 const app = express();
 console.log(config);
@@ -73,5 +74,6 @@ app.use("/api/account-receivable", AccountReceivable);
 app.use("/api/customer-payment", CustomerPayment);
 app.use("/api/account-payable", AccountPayable);
 app.use("/api/supplier-payment", SupplierPayment);
+app.use("/api/quotation", Quotation);
 
 export default app;
