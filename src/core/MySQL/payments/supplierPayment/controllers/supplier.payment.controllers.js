@@ -74,3 +74,42 @@ export const create_supplier_payment = async (req, res) => {
     res.status(500).json(err);
   }
 };
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const supplier_payments_by_account = async (req, res) => {
+  try {
+    const { company_id, account_payable_id } = req.params;
+
+    const company_data = await Company.findById(company_id);
+    if (!company_data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Empresa no encontrada" });
+
+    const cant = await SupplierPayment.count(company_id);
+    const data = await SupplierPayment.findByAccount(
+      account_payable_id,
+      company_id,
+      req.body.skippag,
+      req.body.limit,
+    );
+
+    res.status(200).json({
+      status: true,
+      message: "Cargando pagos",
+      data,
+      pagination: {
+        pag: req.params.pag,
+        perpage: req.body.limit,
+        pags: Math.ceil(cant / req.body.limit),
+      },
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
