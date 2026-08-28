@@ -79,3 +79,71 @@ export const create_quotation = async (req, res) => {
     res.status(500).json(err);
   }
 };
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const lists_quotations = async (req, res) => {
+  try {
+    const { company_id } = req.params;
+
+    const company_data = await Company.findById(company_id);
+    if (!company_data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Empresa no encontrada" });
+
+    const cant = await Quotation.count(company_id);
+    const data = await Quotation.findAll(
+      company_id,
+      req.body.skippag,
+      req.body.limit,
+    );
+
+    res.status(200).json({
+      status: true,
+      message: "Cargando cotizaciones...",
+      data,
+      pagination: {
+        pag: req.params.pag,
+        perpage: req.body.limit,
+        pags: Math.ceil(cant / req.body.limit),
+      },
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const list_quotation = async (req, res) => {
+  try {
+    const { company_id, id } = req.params;
+
+    const company_data = await Company.findById(company_id);
+    if (!company_data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Empresa no encontrada" });
+
+    const data = await Quotation.findById(id, company_id);
+    if (!data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Cotizacion no encontrada" });
+
+    res
+      .status(200)
+      .json({ status: true, message: "Cargando cotizacion...", data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
