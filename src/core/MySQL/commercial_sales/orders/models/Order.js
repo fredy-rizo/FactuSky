@@ -72,19 +72,19 @@ export class Order {
       for (const item of items) {
         await connection.execute(
           `
-                    INSER INTO order_items
-                    (
-                        order_id,
-                        product_id,
-                        quantity,
-                        unit_price,
-                        discount,
-                        tax,
-                        subtotal,
-                        total
-                    )
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?)
-                    `,
+         INSERT INTO order_items
+          (
+            order_id,
+            product_id,
+            quantity,
+            unit_price,
+            discount,
+            tax,
+            subtotal,
+            total
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          `,
           [
             order_id,
             item.product_id,
