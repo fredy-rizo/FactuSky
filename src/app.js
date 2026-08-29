@@ -33,6 +33,7 @@ import AccountPayable from "./core/MySQL/payments/accountPayable/routes/account.
 import SupplierPayment from "./core/MySQL/payments/supplierPayment/routes/supplier.payment.routes.js";
 import Quotation from "./core/MySQL/commercial_sales/quotions/routes/quotation.routes.js";
 import Order from "./core/MySQL/commercial_sales/orders/routes/order.routes.js";
+import Promotion from "./core/MySQL/commercial_sales/promotions/routes/promotion.routes.js";
 
 const app = express();
 console.log(config);
@@ -77,5 +78,6 @@ app.use("/api/account-payable", AccountPayable);
 app.use("/api/supplier-payment", SupplierPayment);
 app.use("/api/quotation", Quotation);
 app.use("/api/order", Order);
+app.use("/api/promotion", Promotion);
 
 export default app;
