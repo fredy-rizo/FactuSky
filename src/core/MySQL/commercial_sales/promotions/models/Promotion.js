@@ -174,16 +174,4 @@ export class Promotion {
       [status, id, company_id],
     );
   }
-
-  static async count(company_id) {
-    const [rows] = await db.execute(
-      `
-            SELECT COUNT(*) AS total
-            FROM promotions
-            WHERE company_id = ?
-            `,
-      [company_id],
-    );
-    return rows[0].total;
-  }
 }

@@ -22,12 +22,16 @@ export const create_promotion = async (req, res) => {
     } = req.body;
 
     if (!company_id || !name || !type || value === undefined || !start_date)
+      return res.status(400).json({
+        status: false,
+        message: "Los datos de la promocion son requeridos",
+      });
+
+    const company_data = await Company.findById(company_id);
+    if (!company_data)
       return res
-        .status(400)
-        .json({
-          status: false,
-          message: "Los datos de la promocion son requeridos",
-        });
+        .status(404)
+        .json({ status: false, message: "Empresa no encontrada" });
 
     if (!["percentaje", "fixed"].includes(type))
       return res
@@ -56,6 +60,40 @@ export const create_promotion = async (req, res) => {
     res
       .status(201)
       .json({ status: true, message: "Promocion creada correctamente", data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const promotions_by_product = async (req, res) => {
+  try {
+    const { company_id, product_id } = req.params;
+
+    const company_data = await Company.findById(company_id);
+    if (!company_data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Empresa no encontrada" });
+
+    const data = await Promotion.findActiveForProduct(company_id, product_id);
+    if (!data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Promocion no encontrada" });
+
+    res
+      .status(200)
+      .json({
+        status: false,
+        message: "Cargando promocion de producto...",
+        data,
+      });
   } catch (err) {
     console.log(err);
     res.status(500).json(err);
