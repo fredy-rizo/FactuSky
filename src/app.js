@@ -34,6 +34,7 @@ import SupplierPayment from "./core/MySQL/payments/supplierPayment/routes/suppli
 import Quotation from "./core/MySQL/commercial_sales/quotions/routes/quotation.routes.js";
 import Order from "./core/MySQL/commercial_sales/orders/routes/order.routes.js";
 import Promotion from "./core/MySQL/commercial_sales/promotions/routes/promotion.routes.js";
+import ExpenseCategory from "./core/MySQL/bills/expenseCategory/routes/expense.category.routes.js";
 
 const app = express();
 console.log(config);
@@ -79,5 +80,6 @@ app.use("/api/supplier-payment", SupplierPayment);
 app.use("/api/quotation", Quotation);
 app.use("/api/order", Order);
 app.use("/api/promotion", Promotion);
+app.use("/api/expense-category", ExpenseCategory);
 
 export default app;
