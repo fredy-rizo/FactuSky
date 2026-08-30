@@ -6,9 +6,11 @@ import {
 import { Paginate } from "../../../../../middleware/utils/paginate.js";
 import {
   approve_expense,
+  cancel_expense,
   create_expense,
   list_expense,
   lists_expenses,
+  pending_expenses,
   update_expense,
 } from "../controllers/expense.controller.js";
 const router = Router();
@@ -48,5 +50,20 @@ router.patch(
   TokenPermissions("expenses", "update"),
   approve_expense,
 ); // Aprobar gasto
+
+router.patch(
+  "/:company_id/cancel/:id",
+  TokenAny,
+  TokenPermissions("expenses", "update"),
+  cancel_expense,
+); // Cancelar gasto
+
+router.get(
+  "/pending/:company_id/:pag?/:perpage?",
+  TokenAny,
+  TokenPermissions("expenses", "view"),
+  Paginate,
+  pending_expenses,
+); // Listar gastos pendientes
 
 export default router;
