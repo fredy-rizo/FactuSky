@@ -355,4 +355,82 @@ export class Expense {
       connection.release();
     }
   }
+
+  static async markAsPaid(id, company_id, paid_by, cash_movement_id) {
+    return await db.execute(
+      `
+      UPDATE expenses
+      SET
+        payment_status = 'paid',
+        paid_by = ?,
+        paid_at = NOW(),
+        cash_movement_id = ?
+      WHERE id = ?
+      AND company_id = ?
+      AND status = 'approved'
+      AND payment_status = 'pending'
+      `,
+      [paid_by || null, cash_movement_id || null, id, company_id],
+    );
+  }
+
+  static async totals(company_id) {
+    const [rows] = await db.execute(
+      `
+      SELECT
+        COALESCE(SUM(total), 0) AS total_expenses,
+        COALESCE(
+          SUM(
+            CASE
+              WHEN status = 'approved'
+              AND payment_status = 'paid'
+              THEN total
+              ELSE 0
+            END
+          ),
+          0
+        ) AS total_paid,
+        
+        COALESCE(
+          SUM(
+            CASE
+              WHEN status = 'approved'
+              AND payment_status = 'pending'
+              THEN total
+              ELSE 0
+            END
+          ),
+          0
+        ) AS total_pending
+      FROM expenses
+      WHERE company_id = ?
+      AND status != 'cancelled'
+      `,
+      [company_id],
+    );
+    return rows[0];
+  }
+
+  static async totalsByCategory(company_id) {
+    const [rows] = await db.execute(
+      `
+      SELECT
+        ec.id AS cateogory_id,
+        ec.name AS category_name,
+        COUNT(e.id) AS expenses_count,
+        COALESCE(SUM(e.total), 0) AS total
+      FROM expenses e
+      INNER JOIN expense_categories ec
+        ON ec.id = e.category_id
+      WHERE e.company_id = ?
+      AND e.status != 'cancelled'
+      GROUP BY
+        ec.id,
+        ec.name
+      ORDER BY total DESC
+      `,
+      [company_id],
+    );
+    return rows;
+  }
 }
