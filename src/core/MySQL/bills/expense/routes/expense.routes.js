@@ -5,9 +5,11 @@ import {
 } from "../../../../../middleware/tools/segurity.js";
 import { Paginate } from "../../../../../middleware/utils/paginate.js";
 import {
+  approve_expense,
   create_expense,
   list_expense,
   lists_expenses,
+  update_expense,
 } from "../controllers/expense.controller.js";
 const router = Router();
 
@@ -32,5 +34,19 @@ router.get(
   TokenPermissions("expenses", "view"),
   list_expense,
 ); // Listar un solo gasto
+
+router.put(
+  "/:company_id/update/:id",
+  TokenAny,
+  TokenPermissions("expenses", "update"),
+  update_expense,
+); // Actualizar gasto
+
+router.patch(
+  "/:company_id/approve/:id",
+  TokenAny,
+  TokenPermissions("expenses", "update"),
+  approve_expense,
+); // Aprobar gasto
 
 export default router;

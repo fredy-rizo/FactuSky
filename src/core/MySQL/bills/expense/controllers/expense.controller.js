@@ -153,3 +153,98 @@ export const list_expense = async (req, res) => {
     res.status(500).json(err);
   }
 };
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const update_expense = async (req, res) => {
+  try {
+    const { company_id, id } = req.params;
+
+    const company_data = await Company.findById(company_id);
+    if (!company_data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Empresa no encontrada" });
+
+    const expense = await Expense.findById(id, company_id);
+    if (!expense)
+      return res
+        .status(404)
+        .json({ status: false, message: "Gasto no encontrado" });
+
+    if (expense.status !== "draft")
+      return res.status(400).json({
+        status: false,
+        message: "Solo se pueden modificar gastos en estado draft",
+      });
+
+    const subtotal = Number(req.body.subtotal || 0);
+    const tax = Number(req.body.tax || 0);
+    const discount = Number(req.body.discount || 0);
+    const total = subtotal + tax - discount;
+
+    await Expense.update(id, company_id, {
+      ...req.body,
+      subtotal,
+      tax,
+      discount,
+      total,
+    });
+
+    const data = await Expense.findById(id, company_id);
+    res.status(200).json({
+      status: true,
+      message: " Gasto actualizado correctamente",
+      data,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const approve_expense = async (req, res) => {
+  try {
+    const { company_id, id } = req.params;
+
+    const { approved_by } = req.body;
+
+    const company_data = await Company.findById(company_id);
+    if (!company_data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Empresa no encontrada" });
+
+    const expense = await Expense.findById(id, company_id);
+    if (!expense)
+      return res
+        .status(404)
+        .json({ status: false, message: "Gasto no encontrado" });
+
+    if (expense.status !== "draft")
+      return res
+        .status(400)
+        .json({
+          status: false,
+          message: "Solo se pueden aprobar gastos en draft",
+        });
+
+    await Expense.approve(id, company_id, approved_by);
+
+    const data = await Expense.findById(id, company_id);
+    res
+      .status(200)
+      .json({ status: true, message: "Gasto aprobado correctamente", data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
