@@ -8,8 +8,10 @@ import {
   approve_expense,
   cancel_expense,
   create_expense,
+  expenses_summary,
   list_expense,
   lists_expenses,
+  pay_expense,
   pending_expenses,
   update_expense,
 } from "../controllers/expense.controller.js";
@@ -65,5 +67,20 @@ router.get(
   Paginate,
   pending_expenses,
 ); // Listar gastos pendientes
+
+router.get(
+  "/:company_id/summary/:pag?/:perpage?",
+  TokenAny,
+  TokenPermissions("expenses", "view"),
+  Paginate,
+  expenses_summary,
+); // Resumen de
+
+router.post(
+  "/:company_id/pay/:id",
+  TokenAny,
+  TokenPermissions("expenses", "pay"),
+  pay_expense,
+); // Pagar gasto
 
 export default router;

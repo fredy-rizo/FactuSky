@@ -227,115 +227,148 @@ export class Expense {
     const connection = await db.getConnection();
 
     try {
+      await connection.beginTransaction();
+
       const [expenseRows] = await connection.execute(
         `
-                SELECT *
-                FROM expenses
-                WHERE id = ?
-                AND company_id = ?
-                LIMIT 1
-                FOR UPDATE
-                `,
+        SELECT *
+        FROM expenses
+        WHERE id = ?
+        AND company_id = ?
+        LIMIT 1
+        FOR UPDATE
+      `,
         [id, company_id],
       );
 
-      if (!expenseRows.length) throw new Error("Gasto no encontrado");
+      if (!expenseRows.length) {
+        throw new Error("Gasto no encontrado");
+      }
 
       const expense = expenseRows[0];
 
-      if (expense.status !== "approved")
+      if (expense.status !== "approved") {
         throw new Error("El gasto debe estar aprobado antes de pagarse");
+      }
 
-      if (expense.payment_status === "paid")
+      if (expense.payment_status === "paid") {
         throw new Error("Este gasto ya fue pagado");
+      }
 
-      if (!cash_register_id)
+      if (!cash_register_id) {
         throw new Error("La caja es requerida para registrar el pago");
+      }
 
-      const [cashRows] = await connection.execute(
+      const [openingRows] = await connection.execute(
         `
-                SELECT *
-                FROM cash_registers
-                WHERE id = ?
-                AND company_id = ?
-                AND status = 'open'
-                LIMIT 1
-                FOR UPDATE
-                `,
+        SELECT *
+        FROM cash_openings
+        WHERE cash_register_id = ?
+        AND company_id = ?
+        AND status = 'open'
+        LIMIT 1
+        FOR UPDATE
+        `,
         [cash_register_id, company_id],
       );
 
-      if (!cashRows.length)
-        throw new Error("La caja no existe o no esa abierta");
+      if (!openingRows.length) {
+        throw new Error("La caja no existe o no tiene una apertura abierta");
+      }
 
-      const cashRegister = cashRows[0];
+      const cashOpening = openingRows[0];
+      const [cashRows] = await connection.execute(
+        `
+        SELECT *
+        FROM cash_registers
+        WHERE id = ?
+        AND company_id = ?
+        LIMIT 1
+       `,
+        [cash_register_id, company_id],
+      );
+
+      if (!cashRows.length) {
+        throw new Error("Caja no encontrada");
+      }
+
+      const [balanceRows] = await connection.execute(
+        `
+        SELECT
+          COALESCE(
+            SUM(
+              CASE
+                WHEN movement_type = 'income' THEN amount
+                WHEN movement_type = 'expense' THEN -amount
+                ELSE 0
+              END
+            ),
+            0
+          ) AS movement_balance
+        FROM cash_movements
+        WHERE cash_opening_id = ?
+      `,
+        [cashOpening.id],
+      );
+
+      const movementBalance = Number(balanceRows[0]?.movement_balance || 0);
+      const openingAmount = Number(cashOpening.opening_amount || 0);
+      const currentBalance = openingAmount + movementBalance;
       const amount = Number(expense.total);
-      const currentBalance = Number(cashRegister.current_balance);
 
-      if (currentBalance < amount)
+      if (currentBalance < amount) {
         throw new Error(
-          "La caja no tiene saldo suficiente para pagar este gasto",
+          `La caja no tiene saldo suficiente para pagar este gasto. ` +
+            `Saldo disponible: ${currentBalance.toFixed(2)}, ` +
+            `monto del gasto: ${amount.toFixed(2)}`,
         );
+      }
 
       const [movementResult] = await connection.execute(
         `
-                INSERT INTO cash_movements
-                (
-                    company_id,
-                    cash_register_id,
-                    type,
-                    amount,
-                    description,
-                    reference_type,
-                    reference_id,
-                    payment_method_id,
-                    user_id
-                )
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `,
+        INSERT INTO cash_movements
+          (
+            company_id,
+            cash_opening_id,
+            user_id,
+            movement_type,
+            category,
+            amount,
+            description,
+            reference_type,
+            reference_id
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
         [
           company_id,
-          cash_register_id,
+          cashOpening.id,
+          paid_by || null,
+          "expense",
           "expense",
           amount,
           `Pago de gasto ${expense.expense_number}`,
           "expense",
           expense.id,
-          payment_method_id || expense.payment_method_id || null,
-          paid_by || null,
         ],
       );
 
       const cash_movement_id = movementResult.insertId;
-
-      await connection.execute(
+      const [expenseUpdate] = await connection.execute(
         `
-                UPDATE cash_registers
-                SET
-                    current_balance =
-                        current_balance - ?
-                WHERE id = ?
-                AND company_id = ?
-                AND status = 'open'
-                `,
-        [amount, cash_movement_id, company_id],
-      );
-
-      await connection.execute(
-        `
-                UPDATE expenses
-                SET
-                    payment_status = 'paid',
-                    paid_by = ?,
-                    paid_at = NOW(),
-                    cash_register_id = ?,
-                    payment_method_id = ?,
-                    cash_movement_id = ?
-                WHERE id = ?
-                AND company_id = ?
-                AND status = 'approved'
-                AND payment_status = 'pending'
-                `,
+        UPDATE expenses
+        SET
+          payment_status = 'paid',
+          paid_by = ?,
+          paid_at = NOW(),
+          cash_register_id = ?,
+          payment_method_id = ?,
+          cash_movement_id = ?
+        WHERE id = ?
+        AND company_id = ?
+        AND status = 'approved'
+        AND payment_status = 'pending'
+        `,
         [
           paid_by || null,
           cash_register_id,
@@ -346,7 +379,12 @@ export class Expense {
         ],
       );
 
+      if (expenseUpdate.affectedRows === 0) {
+        throw new Error("No fue posible actualizar el estado del gasto");
+      }
+
       await connection.commit();
+
       return await Expense.findById(id, company_id);
     } catch (err) {
       await connection.rollback();

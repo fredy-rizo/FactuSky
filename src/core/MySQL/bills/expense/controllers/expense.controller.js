@@ -326,3 +326,90 @@ export const pending_expenses = async (req, res) => {
     res.status(500).json(err);
   }
 };
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const expenses_summary = async (req, res) => {
+  try {
+    const { company_id } = req.params;
+
+    const company_data = await Company.findById(company_id);
+    if (!company_data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Empresa no encontrada" });
+
+    const cant = await Expense.count(company_id);
+    const totals = await Expense.totals(
+      company_id,
+      req.body.skippag,
+      req.body.limit,
+    );
+    const categories = await Expense.totalsByCategory(
+      company_id,
+      req.body.skippag,
+      req.body.limit,
+    );
+
+    res.status(200).json({
+      status: true,
+      message: "Resumen de gastos",
+      data: {
+        totals,
+        categories,
+      },
+      pagination: {
+        pag: req.params.pag,
+        perpage: req.body.limit,
+        pags: Math.ceil(cant / req.body.limit),
+      },
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const pay_expense = async (req, res) => {
+  try {
+    const { company_id, id } = req.params;
+    const { cash_register_id, payment_method_id, paid_by } = req.body;
+
+    const company_data = await Company.findById(company_id);
+    if (!company_data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Empresa no encontrada" });
+
+    if (!cash_register_id)
+      return res
+        .status(400)
+        .json({
+          status: false,
+          message: "La caja es requerida para registrar el pago",
+        });
+
+    const data = await Expense.pay({
+      id,
+      company_id,
+      cash_register_id,
+      payment_method_id,
+      paid_by,
+    });
+
+    res
+      .status(200)
+      .json({ status: true, message: "Gasto pagado correctamente", data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
