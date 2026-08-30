@@ -35,6 +35,7 @@ import Quotation from "./core/MySQL/commercial_sales/quotions/routes/quotation.r
 import Order from "./core/MySQL/commercial_sales/orders/routes/order.routes.js";
 import Promotion from "./core/MySQL/commercial_sales/promotions/routes/promotion.routes.js";
 import ExpenseCategory from "./core/MySQL/bills/expenseCategory/routes/expense.category.routes.js";
+import Expense from "./core/MySQL/bills/expense/routes/expense.routes.js";
 
 const app = express();
 console.log(config);
@@ -81,5 +82,6 @@ app.use("/api/quotation", Quotation);
 app.use("/api/order", Order);
 app.use("/api/promotion", Promotion);
 app.use("/api/expense-category", ExpenseCategory);
+app.use("/api/expense", Expense);
 
 export default app;
