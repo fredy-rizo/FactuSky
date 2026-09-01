@@ -480,7 +480,77 @@ export class Report {
 
   // Resumen de gastos
   static async expensesSummary(company_id, start_date, end_date) {
-    `
-    `;
+    const [rows] = await db.execute(
+      `
+      SELECT
+        COUNT(*) AS expenses_count,
+        COALESCE(SUM(subtotal), 0) AS subtotal,
+        COALESCE(SUM(tax), 0) AS tax,
+        COALESCE(SUM(discount), 0) AS discount,
+        COALESCE(SUM(total), 0) AS total
+      FROM expenses
+      WHERE company_id = ?
+      AND status != 'cancelled'
+      AND expense_date >= ?
+      AND expense_date < DATE_ADD(?, INTERVAL 1 DAY)
+     `,
+      [company_id, start_date, end_date],
+    );
+    return rows[0];
+  }
+
+  // Gastos por categoria
+  static async expensesByCategory(company_id, start_date, end_date) {
+    const [rows] = await db.execute(
+      `
+      SELECT
+        ec.id AS category_id,
+        ec.name AS category_name,
+        COUNT(e.id) AS expenses_count,
+        COALESCE(SUM(e.total), 0) AS total
+      FROM expenses e
+      INNER JOIN expense_categories ec
+        ON ec.id = e.category_id
+      WHERE e.company_id = ?
+      AND e.status != 'cancelled'
+      AND e.expense_date >= ?
+      AND e.expense_date < DATE_ADD(?, INTERVAL 1 DAY)
+      GROUP BY
+        ec.id,
+        ec.name
+      ORDER BY total DESC
+      `,
+      [company_id, start_date, end_date],
+    );
+    return rows;
+  }
+
+  // Cuentas por cobrar
+  static async receivables(company_id) {
+    const [rows] = await db.execute(
+      `
+      SELECT
+        COUNT(*) AS accounts_count,
+        COALESCE(
+          SUM(total_amount),
+          0
+        ) AS total_amount,
+        COALESCE(
+          SUM(paid_amount),
+          0
+        ) AS paid_amount,
+        COALESCE(
+          SUM(
+            total_amount - paid_amount
+          ),
+          0
+        ) AS pending_amount
+      FROM accounts_receivable
+      WHERE company_id = ?
+      AND status != 'cancelled'
+      `,
+      [company_id],
+    );
+    return rows[0];
   }
 }
