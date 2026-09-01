@@ -36,6 +36,7 @@ import Order from "./core/MySQL/commercial_sales/orders/routes/order.routes.js";
 import Promotion from "./core/MySQL/commercial_sales/promotions/routes/promotion.routes.js";
 import ExpenseCategory from "./core/MySQL/bills/expenseCategory/routes/expense.category.routes.js";
 import Expense from "./core/MySQL/bills/expense/routes/expense.routes.js";
+import Report from "./core/MySQL/reports/routes/reports.routes.js";
 
 const app = express();
 console.log(config);
@@ -83,5 +84,6 @@ app.use("/api/order", Order);
 app.use("/api/promotion", Promotion);
 app.use("/api/expense-category", ExpenseCategory);
 app.use("/api/expense", Expense);
+app.use("/api/report", Report);
 
 export default app;

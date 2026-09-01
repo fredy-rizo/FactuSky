@@ -57,32 +57,34 @@ export class Report {
 
       db.execute(
         `
-                SELECT 
-                    COUNT(*) AS total_accounts,
-                    COALESCE(
-                        SUM(total_amount - paid_amount),
-                        0
-                    ) AS pending_amount
-                FROM accounts_receivable
-                WHERE company_id = ?
-                AND status NOT IN ('paid','cancelled')
-                `,
-        [company_id],
+          SELECT
+            COUNT(*) AS total_accounts,
+            COALESCE(SUM(original_amount), 0) AS total_amount,
+            COALESCE(SUM(paid_amount), 0) AS paid_amount,
+            COALESCE(SUM(pending_amount), 0) AS pending_amount
+          FROM accounts_receivable
+          WHERE company_id = ?
+          AND status NOT IN ('paid', 'cancelled')
+          AND issue_date >= ?
+          AND issue_date < DATE_ADD(?, INTERVAL 1 DAY)
+        `,
+        [company_id, start_date, end_date],
       ),
 
       db.execute(
         `
-                SELECT
-                    COUNT(*) AS total_accounts
-                    COALESCE(
-                        SUN(total_amount - paid_amount),
-                        0
-                    ) AS pending_amount
-                FROM accounts_payable
-                WHERE company_id = ?
-                AND status NOT IN ('paid','cancelled')
-                `,
-        [company_id],
+          SELECT
+            COUNT(*) AS total_accounts,
+            COALESCE(SUM(original_amount), 0) AS total_amount,
+            COALESCE(SUM(paid_amount), 0) AS paid_amount,
+            COALESCE(SUM(pending_amount), 0) AS pending_amount
+          FROM accounts_payable
+          WHERE company_id = ?
+          AND status NOT IN ('paid', 'cancelled')
+          AND issue_date >= ?
+          AND issue_date < DATE_ADD(?, INTERVAL 1 DAY)
+        `,
+        [company_id, start_date, end_date],
       ),
 
       db.execute(
@@ -94,7 +96,7 @@ export class Report {
                     ON p.id = i.product_id
                 WHERE i.company_id = ?
                 AND i.quantity <= i.minimum_stock
-                AND p.status = 'active'
+                AND p.active = 1
                 `,
         [company_id],
       ),
@@ -379,7 +381,7 @@ export class Report {
         ON p.id = i.product_id
       WHERE i.company_id = ?
       AND i.quantity <= i.minimum_stock
-      AND p.status = 'active'
+      AND p.active = 1
       ORDER BY
         i.quantity ASC,
         p.name ASC
