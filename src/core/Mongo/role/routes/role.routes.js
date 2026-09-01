@@ -13,35 +13,31 @@ import {
 import { Paginate } from "../../../../middleware/utils/paginate.js";
 const router = Router();
 
-router.post("/create", TokenAny, TokenAuthorize("super admin"), create_role); // Crear rol de empresa
+router.post("/create", TokenAny, create_role); // Crear rol de empresa — super admin y company_user (control en controller)
 
 router.get(
   "/list-role/:company_id/:pag?/:perpage?",
   TokenAny,
-  TokenAuthorize("super admin"),
   Paginate,
   list_role_company,
-); // Listar roles de empresa
+); // Listar roles de empresa — permite super admin y company_user (control en controller)
 
 router.get(
   "/list/:role_id",
   TokenAny,
-  TokenAuthorize("super admin"),
   list_role_unique,
 ); // Listar un solo rol
 
 router.put(
   "/update/:role_id",
   TokenAny,
-  TokenAuthorize("super admin"),
   update_role_company,
 ); // Actualizar rol de empresa
 
 router.put(
   "/change-status/:role_id",
   TokenAny,
-  TokenAuthorize("super admin"),
   change_role_status,
-); // Activar o desactivar rol
+); // Activar o desactivar rol — ahora accesible para empresa
 
 export default router;

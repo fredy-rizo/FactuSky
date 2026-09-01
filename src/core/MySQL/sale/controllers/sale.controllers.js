@@ -46,7 +46,7 @@ export const create_sale = async (req, res) => {
         .json({ status: false, message: "Empresa no encontrada" });
 
     const calculatedSubtotal = items.reduce(
-      (sum, item) => sum + Number(item.quantity) * Number(item.unit_price),
+      (sum, item) => sum + Number(item.quantity) * Number(item.unit_price ?? item.price ?? 0),
       0,
     );
 
@@ -60,7 +60,8 @@ export const create_sale = async (req, res) => {
         : saleSubtotal + saleTax * saleDiscount;
 
     const processedItems = items.map((item) => {
-      const itemSubtotal = Number(item.quantity) * Number(item.unit_price);
+      const unitPrice = Number(item.unit_price ?? item.price ?? 0);
+      const itemSubtotal = Number(item.quantity) * unitPrice;
 
       const itemDiscount = Number(item.discount || 0);
       const itemTax = Number(item.tax || 0);
@@ -69,7 +70,7 @@ export const create_sale = async (req, res) => {
       return {
         product_id: item.product_id,
         quantity: Number(item.quantity),
-        unit_price: Number(item.unit_price),
+        unit_price: unitPrice,
         discount: itemDiscount,
         tax: itemTax,
         subtotal: itemSubtotal,

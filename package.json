@@ -7,7 +7,10 @@
   "scripts": {
     "clean": "rm -rf build && mkdir build",
     "build": "npm run clean && npm run build-server",
-    "dev": "nodemon --exec node src/index.js"
+    "dev": "nodemon --exec node src/index.js",
+    "dev:all": "concurrently \"pnpm --filter backend dev\" \"pnpm --filter frontend dev\"",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "nodemon --exec node src/index.js"
   },
   "keywords": [],
   "author": "",

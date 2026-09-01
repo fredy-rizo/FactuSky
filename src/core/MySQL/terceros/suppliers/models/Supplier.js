@@ -106,20 +106,6 @@ export class Supplier {
   }
 
   static async findByDocument(company_id, document_number) {
-    cons[rows] = await db.execute(
-      `
-        SELECT *
-        FROM suppliers
-        WHERE company_id = ?
-        AND document_number = ?
-        LIMIT 1
-        `,
-      [company_id, document_number],
-    );
-    return rows[0];
-  }
-
-  static async findByDocument(company_id, document_number) {
     const [rows] = await db.execute(
       `
       SELECT *

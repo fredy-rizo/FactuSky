@@ -83,12 +83,12 @@ export const TokenAny = async (req, res, next) => {
 
     res.status(404).json({ status: false, message: "Usuario no encontrado" });
   } catch (err) {
-    if (err.name === "Token expired error")
+    if (err.name === "TokenExpiredError")
       return res
         .status(403)
         .json({ status: false, message: "Sesion finalizada" });
 
-    return res.status(403).json({ status: 403, message: "Token invalido" });
+    return res.status(403).json({ status: false, message: "Token invalido" });
   }
 };
 
@@ -116,7 +116,7 @@ export const TokenAuthorize = (...role) => {
       if (role.includes(userRole)) return next();
 
       return res
-        .statu(403)
+        .status(403)
         .json({ status: false, message: "No tienes permisos" });
     } catch (err) {
       return res
@@ -144,14 +144,14 @@ export const TokenPermissions = (...permissions) => {
         });
       }
 
-      // Super Admin
+      // Super Admin bypass total
       if (req.user.type === "user" && req.user.role === "super admin") {
         return next();
       }
 
-      // CompanyUser && otros roles
+      // CompanyUser administrador bypass
       if (
-        req.user.type === "company_iser" &&
+        req.user.type === "company_user" &&
         req.user.role?.code === "administrador"
       )
         return next();
@@ -163,29 +163,73 @@ export const TokenPermissions = (...permissions) => {
 
       const access = req.user.role?.access;
       if (!access)
-        return res
-          .statu(403)
-          .json({
-            status: false,
-            message: "El rol no tiene accesos configurados",
-          });
+        return res.status(403).json({
+          status: false,
+          message: "El rol no tiene accesos configurados",
+        });
 
-      const moduleAccess = access[module];
-      if (!moduleAccess)
-        return res.status({
+      // permissions: [module, action] or [module] or []
+      // Soporta uso legacy TokenPermissions("products","create") -> module=products, action=create
+      // y también sin parámetros (solo verifica company_user)
+      if (!permissions.length) return next();
+
+      let moduleKey = permissions[0];
+      let actionKey = permissions[1];
+
+      // Si se pasó un solo string con formato "module:action"
+      if (
+        !actionKey &&
+        typeof moduleKey === "string" &&
+        moduleKey.includes(":")
+      ) {
+        const parts = moduleKey.split(":");
+        moduleKey = parts[0];
+        actionKey = parts[1];
+      }
+
+      // Normaliza access: puede ser Map o Object
+      const getModuleAccess = (acc, mod) => {
+        if (!acc) return null;
+        if (acc instanceof Map)
+          return acc.get(mod) || acc.get(mod.toLowerCase());
+        return acc[mod] || acc[mod.toLowerCase()] || acc[mod.toUpperCase()];
+      };
+
+      const moduleAccess = getModuleAccess(access, moduleKey);
+      if (!moduleAccess) {
+        // Si no hay acción específica, el módulo sin acceso = denegado
+        // Pero si no se especificó acción, permitir si el módulo existe aunque vacío => denegar si no existe
+        if (!actionKey) {
+          return res.status(403).json({
+            status: false,
+            message: "No tienes acceso a este modulo",
+          });
+        }
+        return res.status(403).json({
           status: false,
           message: "No tienes acceso a este modulo",
         });
+      }
 
-      if (!moduleAccess.includes(action))
-        return res
-          .status(403)
-          .json({ status: false, message: "No tienes permisos suficientes" });
+      if (actionKey) {
+        const actions = Array.isArray(moduleAccess)
+          ? moduleAccess
+          : [moduleAccess];
+        const normalized = actions.map((a) => String(a).toLowerCase());
+        if (
+          !normalized.includes(String(actionKey).toLowerCase()) &&
+          !normalized.includes("*") &&
+          !normalized.includes("all")
+        ) {
+          return res
+            .status(403)
+            .json({ status: false, message: "No tienes permisos suficientes" });
+        }
+      }
 
       return next();
     } catch (err) {
       console.log(err);
-
       return res.status(500).json({
         status: false,
         message: "Error al validar permisos",

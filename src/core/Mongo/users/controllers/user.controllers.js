@@ -102,7 +102,7 @@ export const login = async (req, res) => {
         first_name: data_user.first_name,
         last_name: data_user.last_name,
         email: data_user.email,
-        role: data_user.email,
+        role: data_user.role,
         active: data_user.active,
       },
     });
@@ -153,12 +153,10 @@ export const update_data = async (req, res) => {
 
 export const list_users = async (req, res) => {
   try {
-    const cant = await User.find().countDocuments();
-    const data = await User.find({
-      skip: req.body.skippag,
-      limit: req.body.limit,
-      sort: { _id: -1 },
-    });
+    const cant = await User.countDocuments();
+    const limit = Number(req.body.limit) || 10;
+    const skip = Number(req.body.skippag) || 0;
+    const data = await User.find({}).sort({ _id: -1 }).skip(skip).limit(limit);
 
     res.status(200).json({
       status: true,

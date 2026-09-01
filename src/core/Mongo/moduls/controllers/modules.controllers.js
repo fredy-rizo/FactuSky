@@ -13,7 +13,7 @@ export const create_module = async (req, res) => {
     if (!code || !name)
       return res
         .status(400)
-        .json({ status: flase, message: "Campos requeridos" });
+        .json({ status: false, message: "Campos requeridos" });
 
     const exist = await Module.exists({ code: code.toLowerCase() });
     if (exist)

@@ -39,7 +39,7 @@ import Expense from "./core/MySQL/bills/expense/routes/expense.routes.js";
 import Report from "./core/MySQL/reports/routes/reports.routes.js";
 
 const app = express();
-console.log(config);
+
 
 app.set("port", config.PORT);
 app.use(cors());
@@ -47,7 +47,7 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.use((req, res, next) => {
-  console.log("Time:", new Date());
+  
   next();
 });
 

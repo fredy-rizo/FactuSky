@@ -128,9 +128,9 @@ export class Sale {
         [id, company_id],
       );
 
-      if (!saleRows) {
+      if (!saleRows || saleRows.length === 0) {
         await connection.rollback();
-        return null;
+        throw new Error("Venta no encontrada o no está en draft");
       }
 
       const sale = saleRows[0];

@@ -26,7 +26,7 @@ const roleSchema = new Schema(
       of: [String],
       default: {},
     },
-    active: { type: Boolean, default: false },
+    active: { type: Boolean, default: true },
     system: { type: Boolean, default: false },
   },
   {
