@@ -43,3 +43,26 @@ export const dashboard_report = async (req, res) => {
     res.status(500).json(err);
   }
 };
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const sales_summary = async (req, res) => {
+  try {
+    const { company_id } = req.params;
+
+    await validateCompany(company_id);
+
+    const { start_date, end_date } = getDates(req);
+
+    const data = await Report.salesSummary(company_id, start_date, end_date);
+    res
+      .status(200)
+      .json({ status: true, message: "Resumen de ventas cargado", data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
