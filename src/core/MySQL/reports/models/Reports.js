@@ -553,4 +553,33 @@ export class Report {
     );
     return rows[0];
   }
+
+  // Cuentas por pagar
+  static async payables(company_id) {
+    const [rows] = await db.execute(
+      `
+      SELECT 
+        COUNT(*) AS accounts_count,
+        COALESCE(
+          SUM(total_amount),
+          0
+        ) AS total_number,
+        COALESCE(
+          SUM(paid_amount),
+          0
+        ) AS paid_amount,
+        COALESCE(
+          SUM(
+            total_amount - paid_amount
+          ),
+          0
+        ) AS pending_amount
+      FROM accounts_payable
+      WHERE company_id = ?
+      AND status != 'cancelled'
+      `,
+      [company_id],
+    );
+    return rows[0];
+  }
 }
