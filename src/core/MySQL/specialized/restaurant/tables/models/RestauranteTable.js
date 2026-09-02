@@ -162,7 +162,7 @@ export class RestaurantTable {
       `
             UPDATE restaurant_tables
             SET
-                table_nnumber = ?,
+                table_number = ?,
                name = ?,
                 capacity = ?,
                location = ?,
@@ -182,5 +182,89 @@ export class RestaurantTable {
       ],
     );
     return result;
+  }
+
+  static async changeStatus(id, company_id, status) {
+    const [result] = await db.execute(
+      `
+        UPDATE restaurant_tables
+        SET status = ?
+        WHERE id = ?
+        AND company_id = ?
+        `,
+      [status, id, company_id],
+    );
+    return result;
+  }
+
+  static async deactivate(id, company_id) {
+    const [result] = await db.execute(
+      `
+        UPDATE restaurant_tables
+        SET status = 'inactive'
+        WHERE id = ?
+        AND company_id = ?
+        AND status != 'occupied'
+        `,
+      [id, company_id],
+    );
+    return result;
+  }
+
+  static async existsTableNumber(company_id, table_number, exclude_id = null) {
+    let query = `
+        SELECT id
+        FROM restaurant_tables
+        WHERE company_id = ?
+        AND table_number = ?
+    `;
+
+    const params = [company_id, table_number];
+    if (exclude_id) {
+      query += ` AND id != ? `;
+      params.push(exclude_id);
+    }
+
+    query += ` LIMIT 1 `;
+    const [rows] = await db.execute(query, params);
+    return rows.length > 0;
+  }
+
+  static async isAvailable(id, company_id) {
+    const [rows] = await db.execute(
+      `
+        SELECT id
+        FROM restaurant_tables
+        WHERE id = ?
+        AND company_id = ?
+        AND status = 'available'
+        LIMIT 1
+        `,
+      [id, company_id],
+    );
+    return rows.length > 0;
+  }
+
+  static async getStatistics(company_id) {
+    const [rows] = await db.execute(
+      `
+        SELECT
+            COUNT(*) AS total,
+            SUM(status = 'available') AS available,
+            SUM(status = 'occupied') AS occupied,
+            SUM(status = 'reserved') AS reserved,
+            SUM(status = 'inactive') AS inactive
+        FROM restaurant_tables
+        WHERE company_id = ?
+        `,
+      [company_id],
+    );
+    return {
+      total: Number(rows[0].total || 0),
+      available: Number(rows[0].available || 0),
+      occupied: Number(rows[0].occupied || 0),
+      reserved: Number(rows[0].reserved || 0),
+      inactive: Number(rows[0].inactive || 0),
+    };
   }
 }
