@@ -107,3 +107,84 @@ export const list_restaurant_table_session = async (req, res) => {
     res.status(500).json(err);
   }
 };
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const lists_restaurant_table_sessions = async (req, res) => {
+  try {
+    const { company_id } = req.params;
+    const { status } = req.body;
+
+    const company_data = await Company.findById(company_id);
+    if (!company_data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Empresa no encontrada" });
+
+    const cant = await RestaurantTableSession.count(company_id, status);
+    const data = await RestaurantTableSession.findAll(
+      company_id,
+      req.body.skippag,
+      req.body.limit,
+      status,
+    );
+
+    res.status(200).json({
+      status: true,
+      message: "Cargando sesiones...",
+      data,
+      pagination: {
+        pagination: {
+          pag: req.params.pag,
+          perpage: req.body.limit,
+          pags: Math.ceil(cant / req.body.limit),
+        },
+      },
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const get_active_restaurant_table_session = async (req, res) => {
+  try {
+    const { company_id, table_id } = req.params;
+
+    const company_data = await Company.findById(company_id);
+    if (!company_data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Empresa no encontrada" });
+
+    const table = await RestaurantTable.findById(table_id, company_id);
+    if (!table)
+      return res
+        .status(404)
+        .json({ status: false, message: "Mesa no encontrada" });
+
+    const data = await RestaurantTableSession.findActiveByTable(
+      table_id,
+      company_id,
+    );
+    if (!data)
+      return res
+        .status(404)
+        .json({ status: false, message: "La mesa no tiene una sesion activa" });
+
+    res
+      .status(200)
+      .json({ status: true, message: "Cargando sesion activa", data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};

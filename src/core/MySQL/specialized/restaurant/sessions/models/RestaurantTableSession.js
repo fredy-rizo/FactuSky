@@ -177,7 +177,7 @@ export class RestaurantTableSession {
 
     query += `
         ORDER BY rts.id DESC
-        LIMIT ? OFFSER ?
+        LIMIT ? OFFSET ?
     `;
 
     params.push(Number(limit), Number(skip));
