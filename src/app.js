@@ -37,9 +37,9 @@ import Promotion from "./core/MySQL/commercial_sales/promotions/routes/promotion
 import ExpenseCategory from "./core/MySQL/bills/expenseCategory/routes/expense.category.routes.js";
 import Expense from "./core/MySQL/bills/expense/routes/expense.routes.js";
 import Report from "./core/MySQL/reports/routes/reports.routes.js";
+import RestaurantTable from "./core/MySQL/specialized/restaurant/tables/routes/restaurant.table.routes.js";
 
 const app = express();
-
 
 app.set("port", config.PORT);
 app.use(cors());
@@ -47,7 +47,6 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.use((req, res, next) => {
-  
   next();
 });
 
@@ -85,5 +84,6 @@ app.use("/api/promotion", Promotion);
 app.use("/api/expense-category", ExpenseCategory);
 app.use("/api/expense", Expense);
 app.use("/api/report", Report);
+app.use("/api/restaurant-table", RestaurantTable);
 
 export default app;

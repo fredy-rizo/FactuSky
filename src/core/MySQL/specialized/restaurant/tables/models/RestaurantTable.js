@@ -57,7 +57,7 @@ export class RestaurantTable {
                 rts.opened_at AS active_session_opened_at,
                 rts.opened_by AS active_session_opened_by
             FROM restaurant_tables rt
-            LEFT JOIN restaurant_tables_sessions rts
+            LEFT JOIN restaurant_table_sessions rts
                 ON rts.table_id = rt.id
                 AND rts.company_id = rt.company_id
                 AND rts.status = 'open'
