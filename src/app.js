@@ -38,6 +38,7 @@ import ExpenseCategory from "./core/MySQL/bills/expenseCategory/routes/expense.c
 import Expense from "./core/MySQL/bills/expense/routes/expense.routes.js";
 import Report from "./core/MySQL/reports/routes/reports.routes.js";
 import RestaurantTable from "./core/MySQL/specialized/restaurant/tables/routes/restaurant.table.routes.js";
+import RestaurantTableSession from "./core/MySQL/specialized/restaurant/sessions/routes/restaurant.table.session.routes.js";
 
 const app = express();
 
@@ -85,5 +86,6 @@ app.use("/api/expense-category", ExpenseCategory);
 app.use("/api/expense", Expense);
 app.use("/api/report", Report);
 app.use("/api/restaurant-table", RestaurantTable);
+app.use("/api/restaurant-table-session", RestaurantTableSession);
 
 export default app;
