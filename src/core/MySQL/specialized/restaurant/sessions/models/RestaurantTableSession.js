@@ -34,7 +34,7 @@ export class RestaurantTableSession {
       if (!tableRows.length) throw new Error("Mesa no encontrada");
 
       const table = tableRows[0];
-      if (table.status !== "availabe")
+      if (table.status !== "available")
         throw new Error(
           `La mesa no esta disponible. Estado actual: ${table.status}`,
         );
