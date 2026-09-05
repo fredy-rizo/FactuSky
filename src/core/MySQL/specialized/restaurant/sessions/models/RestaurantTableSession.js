@@ -106,7 +106,7 @@ export class RestaurantTableSession {
             SELECT
                 rts.*,
                 rt.table_number,
-                rt.name AS table_number,
+                rt.name AS table_name,
                 rt.capacity,
                 c.first_name AS customer_name
             FROM restaurant_table_sessions rts
@@ -224,13 +224,30 @@ export class RestaurantTableSession {
       const session = sessionRows[0];
       if (session.status !== "open") throw new Error("La sesion no abierta");
 
+      // Cerrar sesion
       await connection.execute(
         `
         UPDATE restaurant_tables
-        SET status = 'available'
+        SET
+          status = 'closed',
+          closed_at = NOW()
         WHERE id = ?
         AND company_id = ?
-        AND status = 'occupied'
+        AND status = 'open'
+        `,
+        [id, company_id],
+      );
+
+      // Liberar mesa
+      await connection.execute(
+        `
+        UPDATE restaurant_table_sessions
+        SET
+          status = 'closed'
+          closed_at = NOW()
+        WHERE id = ?
+        AND company_id = ?
+        AND status = 'open'
         `,
         [session.table_id, company_id],
       );
@@ -268,12 +285,25 @@ export class RestaurantTableSession {
       if (sesion.status !== "open")
         throw new Error("Solo se pueden cancelar sesiones abiertas");
 
+      // Cancelar sesion
       await connection.execute(
         `
         UPDATE restaurant_table_sessions
         SET
-          status = 'cancelled'
+          status = 'cancelled',
           closed_at = NOW()
+        WHERE id = ?
+        AND company_id = ?
+        AND status = 'open'
+        `,
+        [id, company_id],
+      );
+
+      // Liberar mesa
+      await connection.execute(
+        `
+        UPDATE restaurant_tables
+        SET status = 'available'
         WHERE id = ?
         AND company_id = ?
         AND status = 'occupied'

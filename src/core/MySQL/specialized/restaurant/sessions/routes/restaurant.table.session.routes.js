@@ -5,6 +5,8 @@ import {
 } from "../../../../../../middleware/tools/segurity.js";
 import { Paginate } from "../../../../../../middleware/utils/paginate.js";
 import {
+  cancel_restaurant_table_session,
+  close_restaurant_table_session,
   get_active_restaurant_table_session,
   list_restaurant_table_session,
   lists_restaurant_table_sessions,
@@ -40,5 +42,19 @@ router.get(
   TokenPermissions("restaurant", "restaurant.sessions.view"),
   get_active_restaurant_table_session,
 ); // Listar sesion activa de una mesa
+
+router.patch(
+  "/:company_id/close/:id",
+  TokenAny,
+  TokenPermissions("restaurant", "restaurant.sessions.close"),
+  close_restaurant_table_session,
+); // cerrar sesion
+
+router.patch(
+  "/:company_id/cancel/:id",
+  TokenAny,
+  TokenPermissions("restaurant", "restaurant.sessions.cancel"),
+  cancel_restaurant_table_session,
+); // Cancelar sesion
 
 export default router;
