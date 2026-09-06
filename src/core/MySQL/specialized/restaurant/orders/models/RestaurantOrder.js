@@ -426,4 +426,207 @@ export class RestaurantOrder {
       connection.release();
     }
   }
+
+  static async removeItem(order_id, item_id, company_id) {
+    const connection = await db.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      const [orderRows] = await connection.execute(
+        `
+        SELECT *
+        FROM restaurant_orders
+        WHERE id = ?
+        AND company_id = ?
+        FOR UPDATE
+        `,
+        [order_id, company_id],
+      );
+
+      if (!orderRows.length) throw new Error("Orden no encontrada");
+      if (!["pending", "confirmed"].includes(orderRows[0].status))
+        throw new Error("No se pueden eliminar productos de esta orden");
+
+      const [itemRows] = await connection.execute(
+        `
+        SELECT id
+        FROM restaurant_order_items
+        WHERE id = ?
+        AND order_id = ?
+        LIMIT 1
+        `,
+        [item_id, order_id],
+      );
+
+      if (!itemRows.length)
+        throw new Error("Producto de la orden no encontrado");
+
+      await connection.execute(
+        `
+        DELETE FROM restaurant_order_items
+        WHERE id = ?
+        AND order_id = ?
+        `,
+        [item_id, order_id],
+      );
+
+      await RestaurantOrder.recalculateTransaction(connection, order_id);
+      await connection.commit();
+
+      return await RestaurantOrder.findById(order_id, company_id);
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+  }
+
+  static async recalculateTransaction(connection, order_id) {
+    const [rows] = await connection.execute(
+      `
+      SELECT
+        COALESCE(SUM(subtotal), 0) AS subtotal,
+        COALESCE(SUM(tax), 0) AS tax,
+        COALESCE(SUM(discount), 0) AS discount,
+        COALESCE(SUM(total), 0) AS total
+      FROM restaurant_order_items
+      WHERE order_id = ?
+      AND status != 'cancelled'
+      `,
+      [order_id],
+    );
+
+    const totals = rows[0];
+    await connection.execute(
+      `
+      UPDATE restaurant_orders
+      SET
+        subtotal = ?,
+        tax = ?,
+        discount = ?,
+        total = ?
+      WHERE id = ?
+      `,
+      [totals.subtotal, totals.tax, totals.discount, totals.total, order_id],
+    );
+  }
+
+  static async confirm(id, company_id) {
+    const [result] = await db.execute(
+      `
+      UPDATE restaurant_orders
+      SET status = 'confirmed'
+      WHERE id = ?
+      AND company_id = ?
+      AND status = 'pending'
+      `,
+      [id, company_id],
+    );
+    return result;
+  }
+
+  static async cancel(id, company_id) {
+    const connection = await db.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      const [orderRows] = await connection.execute(
+        `
+        SELECT *
+        FROM restaurant_orders
+        WHERE id = ?
+        AND company_id = ?
+        FOR UPDATE
+        `,
+        [id, company_id],
+      );
+
+      if (!orderRows.length) throw new Error("Orden no encontrada");
+
+      const order = orderRows[0];
+      if (!["pending", "confirmed"].includes(order.status))
+        throw new Error("Esta orden no puede ser cancelada");
+
+      await connection.execute(
+        `
+        UPDATE restaurant_orders
+        SET
+          status = 'cancelled'
+          cancelled_at = NOW()
+        WHERE id = ?
+        AND company_id = ?
+        `,
+        [id, company_id],
+      );
+
+      await connection.execute(
+        `
+        UPDATE restaurant_order_items
+        SET status = 'cancelled'
+        WHERE order_id = ?
+        AND status != 'cancelled'
+        `,
+        [id],
+      );
+
+      await connection.commit();
+      return await RestaurantOrder.findById(id, company_id);
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+  }
+
+  static async changeStatus(id, company_id, status) {
+    const allowedTransitions = {
+      confirmed: ["preparing", "cancelled"],
+      preparing: ["ready"],
+      ready: ["served"],
+      served: ["paid"],
+    };
+
+    const [rows] = await db.execute(
+      `
+      SELECT status
+      FROM restaurant_orders
+      WHERE id = ?
+      AND company_id = ?
+      LIMIT 1
+      `,
+      [id, company_id],
+    );
+
+    if (!rows.length) throw new Error("Order no encontrada");
+
+    const currentStatus = rows[0].status;
+    if (!allowedTransitions[currentStatus]?.includes(status))
+      throw new Error(
+        `No se permite cambiar la orden de ${currentStatus} a ${status}`,
+      );
+
+    let extra = "";
+    if (status === "served") {
+      extra = ", served_at = NOW()";
+    }
+
+    if (status === "paid") {
+      extra = ", paid_at = NOW()";
+    }
+
+    const [result] = await db.execute(
+      `
+      UPDATE restaurant_orders
+      SET status = ? ${extra}
+      WHERE id = ?
+      AND company_id = ?
+      `,
+      [status, id, company_id],
+    );
+    return result;
+  }
 }
