@@ -31,9 +31,7 @@ export class RestaurantOrder {
                 AND status = 'open'
                 FOR UPDATE
                 `,
-        session_id,
-        company_id,
-        table_id,
+        [session_id, company_id, table_id],
       );
 
       if (!sessionRows.length)
@@ -86,7 +84,8 @@ export class RestaurantOrder {
         ],
       );
 
-      const order_id = orderResult.insertId();
+      const order_id = orderResult.insertId;
+      await connection.commit();
       return await RestaurantOrder.findById(order_id, company_id);
     } catch (err) {
       await connection.rollback();
@@ -99,22 +98,22 @@ export class RestaurantOrder {
   static async findById(id, company_id) {
     const [orderRows] = await db.execute(
       `
-            SELECT
-                ro.*,
-                rt.table_number,
-                rt.name AS table_number,
-                c.first_name AS customer_name
-            FROM restaurant_orders ro
-            INNER JOIN restaurant_tables rt
-                ON rt.id = ro.table_id
-                AND rt.company_id = ro.company_id
-            LEFT JOIN customers c
-                ON c.id = ro.customer_id
-                AND c.company_id = ro.company_id
-            WHERE ro.id = ?
-            AND ro.company_id = ?
-            LIMIT 1
-            `,
+      SELECT
+        ro.*,
+        rt.table_number,
+        rt.name AS table_name,
+        c.first_name AS customer_name
+      FROM restaurant_orders ro
+      INNER JOIN restaurant_tables rt
+        ON rt.id = ro.table_id
+        AND rt.company_id = ro.company_id
+      LEFT JOIN customers c
+        ON c.id = ro.customer_id
+        AND c.company_id = ro.company_id
+      WHERE ro.id = ?
+      AND ro.company_id = ?
+      LIMIT 1
+      `,
       [id, company_id],
     );
 
@@ -122,16 +121,16 @@ export class RestaurantOrder {
 
     const [items] = await db.execute(
       `
-            SELECT
-                roi.*,
-                p.name AS product_name,
-                p.code AS product_code
-            FROM restaurant_order_items roi
-            INNER JOIN products p
-                ON p.id = roi.product_id
-            WHERE roi.order_id = ?
-            ORDER BY roi.id ASC
-            `,
+      SELECT
+        roi.*,
+        p.name AS product_name,
+        p.barcode AS product_code
+      FROM restaurant_order_items roi
+      INNER JOIN products p
+        ON p.id = roi.product_id
+      WHERE roi.order_id = ?
+      ORDER BY roi.id ASC
+      `,
       [id],
     );
     return {
@@ -193,17 +192,17 @@ export class RestaurantOrder {
   static async findByTable(table_id, company_id) {
     const [rows] = await db.execute(
       `
-        SELECT
-            ro.*,
-            rt.table_number,
-            rt.name AS table_name
-        FROM restaurant_orders ro
-        INNER JOIN restaurant_orders ro
-            ON rt.id = ro.table_id
-            AND rt.company_id = ro.company_id
-        WHERE ro.table_id = ?
-        AND ro.company_id = ?
-        ORDER BY ro.id DESC
+      SELECT
+        ro.*,
+        rt.table_number,
+        rt.name AS table_name
+      FROM restaurant_orders ro
+      INNER JOIN restaurant_tables rt
+        ON rt.id = ro.table_id
+        AND rt.company_id = ro.company_id
+      WHERE ro.table_id = ?
+      AND ro.company_id = ?
+      ORDER BY ro.id DESC
         `,
       [table_id, company_id],
     );
@@ -267,16 +266,16 @@ export class RestaurantOrder {
 
       const [productRows] = await connection.execute(
         `
-            SELECT id, name
-            FROM products
-            WHERE id = ?
-            AND company_id = ?
-            LIMIT 1
-            `,
+        SELECT id, name
+        FROM products
+        WHERE id = ?
+        AND company_id = ?
+        LIMIT 1
+        `,
         [product_id, company_id],
       );
 
-      if (!productRows.length) throw new Error("Producto no encontrado");
+      if (productRows.length) throw new Error("Producto no encontrado");
 
       let price = Number(unit_price);
       if (!Number.isFinite(price) || price < 0)
