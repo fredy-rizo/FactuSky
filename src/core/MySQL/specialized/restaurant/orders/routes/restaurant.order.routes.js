@@ -6,6 +6,9 @@ import {
 import { Paginate } from "../../../../../../middleware/utils/paginate.js";
 import {
   add_restaurant_order_item,
+  cancel_restaurant_order,
+  change_restaurant_order_status,
+  confirm_restaurant_order,
   create_restaurant_order,
   list_restaurant_order,
   list_restaurant_orders_by_session,
@@ -72,5 +75,26 @@ router.delete(
   TokenPermissions("restaurant", "restaurant.orders.delete"),
   remove_restaurant_order_item,
 ); // Eliminar producto
+
+router.patch(
+  "/:company_id/confirm/:id",
+  TokenAny,
+  TokenPermissions("restaurant", "restaurant.orders.confirm"),
+  confirm_restaurant_order,
+); // Confirmar orden
+
+router.patch(
+  "/:company_id/cancel/:id",
+  TokenAny,
+  TokenPermissions("restaurant", "restaurant.orders.cancel"),
+  cancel_restaurant_order,
+); // Cancelar orden
+
+router.patch(
+  "/:company_id/status/:id",
+  TokenAny,
+  TokenPermissions("restaurant", "restaurant.orders.status"),
+  change_restaurant_order_status,
+); // Cambiar estado de orden
 
 export default router;

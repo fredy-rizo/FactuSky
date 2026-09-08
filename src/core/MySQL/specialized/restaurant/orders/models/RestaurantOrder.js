@@ -553,7 +553,7 @@ export class RestaurantOrder {
         `
         UPDATE restaurant_orders
         SET
-          status = 'cancelled'
+          status = 'cancelled',
           cancelled_at = NOW()
         WHERE id = ?
         AND company_id = ?

@@ -313,11 +313,126 @@ export const remove_restaurant_order_item = async (req, res) => {
         .status(404)
         .json({ status: false, message: "Orden no encontrada" });
 
+    res.status(200).json({
+      status: true,
+      message: "Producto eliminado correctamente",
+      data,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const confirm_restaurant_order = async (req, res) => {
+  try {
+    const { company_id, id } = req.params;
+
+    const company_data = await Company.findById(company_id);
+    if (!company_data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Empresa no encontrada" });
+
+    const order = await RestaurantOrder.findById(id, company_id);
+    if (!order)
+      return res
+        .status(404)
+        .json({ status: false, message: "Orden no encontrada" });
+
+    if (order.status !== "pending")
+      return res.status(400).json({
+        status: false,
+        message: "Solo se pueden confirmar ordenes pendientes",
+      });
+
+    if (!order.items.length)
+      return res.status(400).json({
+        status: false,
+        message: "No se puede confirmar una orden sin productos",
+      });
+
+    await RestaurantOrder.confirm(id, company_id);
+    const data = await RestaurantOrder.findById(id, company_id);
+
+    res
+      .status(200)
+      .json({ status: true, message: "Orden confirmada correctamente", data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const cancel_restaurant_order = async (req, res) => {
+  try {
+    const { company_id, id } = req.params;
+
+    const company_data = await Company.findById(company_id);
+    if (!company_data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Empresa no encontrada" });
+
+    const data = await RestaurantOrder.cancel(id, company_id);
+    if (!data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Orden no encontrada" });
+
+    res
+      .status(200)
+      .json({ status: true, message: "Orden cancelada correctamente", data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const change_restaurant_order_status = async (req, res) => {
+  try {
+    const { company_id, id } = req.params;
+    const { status } = req.body;
+
+    if (!status)
+      return res
+        .status(400)
+        .json({ status: false, message: "El estado es requerido" });
+
+    const company_data = await Company.findById(company_id);
+    if (!company_data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Empresa no encontrada" });
+
+    await RestaurantOrder.changeStatus(id, company_id, status);
+
+    const data = await RestaurantOrder.findById(id, company_id);
+    if (!data)
+      return res
+        .status(404)
+        .json({ status: false, message: "Orden no encontrada" });
+
     res
       .status(200)
       .json({
         status: true,
-        message: "Producto eliminado correctamente",
+        message: "Estado de orden actualizado correctamente",
         data,
       });
   } catch (err) {
