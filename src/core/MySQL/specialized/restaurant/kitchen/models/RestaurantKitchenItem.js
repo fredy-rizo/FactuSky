@@ -290,4 +290,95 @@ export class RestaurantKitchenItem {
       connection.release();
     }
   }
+
+  static async syncOrderStatus(connection, order_id, company_id) {
+    const [items] = await connection.execute(
+      `
+      SELECT
+        status,
+        COUNT(*) AS quantity
+      FROM restaurant_kitchen_items
+      WHERE order_id = ?
+      AND company_id = ?
+      GROUP BY status
+      `,
+      [order_id, company_id],
+    );
+
+    if (!items.length) return;
+
+    const statusMap = {};
+    for (const item of items) {
+      statusMap[item.status] = Number(item.quantity);
+    }
+
+    let orderStatus = null;
+    const total = Object.values(statusMap).reduce(
+      (sum, value) => sum + value,
+      0,
+    );
+
+    const served = statusMap.served || 0;
+    const ready = statusMap.ready || 0;
+    const preparing = statusMap.preparing || 0;
+    const pending = statusMap.pending || 0;
+    const cancelled = statusMap.cancelled || 0;
+
+    if (total > 0 && served + cancelled === total) {
+      if (served > 0) {
+        orderStatus = "served";
+      }
+    } else if (
+      ready > 0 ||
+      (ready + served > 0 && ready + served + cancelled === total)
+    ) {
+      orderStatus = "ready";
+    } else if (preparing > 0) {
+      orderStatus = "preparing";
+    } else if (pending > 0) {
+      orderStatus = "confirmed";
+    }
+
+    if (orderStatus) {
+      await connection.execute(
+        `
+        UPDATE restaurant_order
+        SET status = ?
+        WHERE id = ?
+        AND company_id = ?
+        AND status NOT IN ('paid','cancelled')
+        `,
+        [orderStatus, order_id, company_id],
+      );
+    }
+  }
+
+  static async updateNotes(id, company_id, notes) {
+    const [result] = await db.execute(
+      `
+      UPDATE restaurant_kitchen_items
+      SET notes = ?
+      WHERE id = ?
+      AND company_id = ?
+      ANd status IN ('pending','preparing')
+      `,
+      [notes || null, id, company_id],
+    );
+    return result;
+  }
+
+  static async countByStatus(company_id) {
+    const [rows] = await db.execute(
+      `
+      SELECT
+        status,
+        COUNT(*) AS total
+        FROm restaurant_kitchen_items
+        WHERE company_id = ?
+        GROUP BY status
+      `,
+      [company_id],
+    );
+    return rows;
+  }
 }
