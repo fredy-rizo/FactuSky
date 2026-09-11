@@ -2,3 +2,4 @@ node_modules
 /storage
 .env
 fases.tex
+report_example.js
