@@ -2,6 +2,7 @@ import { RestaurantOrder } from "../models/RestaurantOrder.js";
 import { RestaurantTable } from "../../tables/models/RestaurantTable.js";
 import { Company } from "../../../../../Mongo/companies/models/Company.js";
 import { RestaurantTableSession } from "../../sessions/models/RestaurantTableSession.js";
+import { RestaurantKitchenItem } from "../../kitchen/models/RestaurantKitchenItem.js";
 
 /**
  * @param {import('express').Request} req
@@ -358,6 +359,7 @@ export const confirm_restaurant_order = async (req, res) => {
       });
 
     await RestaurantOrder.confirm(id, company_id);
+    await RestaurantKitchenItem.createFromOrder(id, company_id)
     const data = await RestaurantOrder.findById(id, company_id);
 
     res
