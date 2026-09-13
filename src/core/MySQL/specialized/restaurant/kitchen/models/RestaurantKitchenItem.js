@@ -65,7 +65,7 @@ export class RestaurantKitchenItem {
                     (
                         company_id,
                         order_id,
-                        orden_item_id,
+                        order_item_id,
                         product_id,
                         quantity,
                         status,
@@ -127,29 +127,40 @@ export class RestaurantKitchenItem {
     let query = `
       SELECT
         rki.*,
+
         p.name AS product_name,
         p.barcode AS product_code,
+
         ro.order_number,
         ro.table_id,
         ro.session_id,
+
         rt.table_number,
         rt.name AS table_name
+
       FROM restaurant_kitchen_items rki
+
       INNER JOIN products p
         ON p.id = rki.product_id
+
       INNER JOIN restaurant_orders ro
         ON ro.id = rki.order_id
         AND ro.company_id = rki.company_id
+
       INNER JOIN restaurant_tables rt
         ON rt.id = ro.table_id
         AND rt.company_id = ro.company_id
+
       WHERE rki.company_id = ?
     `;
 
     const params = [company_id];
     if (status) {
-      query += ` AND rki.status = ? `;
-      params;
+      query += `
+        AND rki.status = ?
+      `;
+
+      params.push(status);
     }
 
     query += `
@@ -380,5 +391,17 @@ export class RestaurantKitchenItem {
       [company_id],
     );
     return rows;
+  }
+
+  static async count(company_id) {
+    const [rows] = await db.execute(
+      `
+      SELECT COUNT(*) AS count
+      FROM restaurant_kitchen_items
+      WHERE company_id
+      `,
+      [company_id],
+    );
+    return Number(rows[0].count);
   }
 }

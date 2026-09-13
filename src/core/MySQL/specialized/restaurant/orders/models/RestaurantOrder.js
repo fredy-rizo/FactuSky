@@ -275,7 +275,7 @@ export class RestaurantOrder {
         [product_id, company_id],
       );
 
-      if (productRows.length) throw new Error("Producto no encontrado");
+      if (!productRows.length) throw new Error("Producto no encontrado");
 
       let price = Number(unit_price);
       if (!Number.isFinite(price) || price < 0)
