@@ -32,22 +32,22 @@ export class RestaurantBilling {
     const order = orderRows[0];
     const [items] = await db.execute(
       `
-            SELECT
-                roi.*,
+      SELECT
+        roi.*,
 
-                p.name AS product_name,
-                p.barcode AS product_code
+        p.name AS product_name,
+        p.barcode AS product_code
 
-            FROM restaurant_order_items roi
+      FROM restaurant_order_items roi
 
-            INNER JOIN products p
-                ON p.id = roi.product_id
-            
-            WHERE roi.order_id = ?
-            AND roi.company_id = ?
-            AND roi.status != 'cancelled'
+      INNER JOIN products p
+        ON p.id = roi.product_id
 
-            ORDER BY roi.id ASC
+      WHERE roi.order_id = ?
+      AND roi.company_id = ?
+      AND roi.status != 'cancelled'
+
+      ORDER BY roi.id ASC
             `,
       [order_id, company_id],
     );
