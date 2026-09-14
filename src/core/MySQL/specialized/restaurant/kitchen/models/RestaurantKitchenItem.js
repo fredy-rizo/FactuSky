@@ -100,22 +100,34 @@ export class RestaurantKitchenItem {
       `
       SELECT
         rki.*,
+
         p.name AS product_name,
         p.barcode AS product_code,
+
         ro.order_number,
         ro.table_id,
         ro.session_id,
         ro.status AS order_status,
+
         rt.table_number,
         rt.name AS table_name
+
       FROM restaurant_kitchen_items rki
-      INNER JOIN product p
+
+      INNER JOIN products p
         ON p.id = rki.product_id
+
       INNER JOIN restaurant_orders ro
         ON ro.id = rki.order_id
         AND ro.company_id = rki.company_id
+
+      INNER JOIN restaurant_tables rt
+        ON rt.id = ro.table_id
+        AND rt.company_id = ro.company_id
+
       WHERE rki.id = ?
       AND rki.company_id = ?
+
       LIMIT 1
       `,
       [id, company_id],
@@ -264,19 +276,19 @@ export class RestaurantKitchenItem {
 
       let extraFields = "";
       if (newStatus === "preparing") {
-        extraFields = ` started_at = NOW() `;
+        extraFields = `, started_at = NOW() `;
       }
 
       if (newStatus === "ready") {
-        extraFields = ` ready_at = NOW()`;
+        extraFields = `, ready_at = NOW()`;
       }
 
       if (newStatus === "served") {
-        extraFields = ` served_at = NOW()`;
+        extraFields = `, served_at = NOW()`;
       }
 
       if (newStatus === "cancelled") {
-        extraFields = ` cancelled_at = NOW()`;
+        extraFields = `, cancelled_at = NOW()`;
       }
 
       await connection.execute(
@@ -353,7 +365,7 @@ export class RestaurantKitchenItem {
     if (orderStatus) {
       await connection.execute(
         `
-        UPDATE restaurant_order
+        UPDATE restaurant_orders
         SET status = ?
         WHERE id = ?
         AND company_id = ?
