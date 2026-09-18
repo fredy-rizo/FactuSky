@@ -46,7 +46,7 @@ export class RestaurantReservation {
           [company_id, table_id, reservation_date, reservation_time],
         );
 
-        if (conflicts.length)
+        if (!conflicts.length)
           throw new Error("La mesa ya tiene una reserva para esa fecha y hora");
       }
 
@@ -167,7 +167,7 @@ export class RestaurantReservation {
         AND rt.company_id = rr.company_id
 
       WHERE rr.company_id = ?
-      AND rr.reservation = ?
+      AND DATE(rr.reservation_date) = ?
 
       ORDER BY rr.reservation_time ASC
       `,
@@ -390,5 +390,30 @@ export class RestaurantReservation {
       [id, company_id],
     );
     return result;
+  }
+
+  static async count(company_id) {
+    const [rows] = await db.execute(
+      `
+      SELECT COUNT(*) as count
+      FROM restaurant_reservations
+      WHERE company_id
+      `,
+      [company_id],
+    );
+    return Number(rows[0].count);
+  }
+
+  static async countByDate(company_id, reservation_date) {
+    const [rows] = await db.execute(
+      `
+      SELECT COUNT(*) as count
+      FROM restaurant_reservations 
+      WHERE company_id = ? 
+      AND DATE(reservation_date) = ?
+      `,
+      [company_id, reservation_date],
+    );
+    return Number(rows[0].count);
   }
 }

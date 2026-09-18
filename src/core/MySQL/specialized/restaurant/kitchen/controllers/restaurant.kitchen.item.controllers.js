@@ -1,5 +1,4 @@
-import { RestaurantKitchenItem } from "./RestaurantKitchenItem.js";
-import { RestaurantOrder } from "../../orders/models/RestaurantOrder.js";
+import { RestaurantKitchenItem } from "../models/RestaurantKitchenItem.js";
 import { Company } from "../../../../../Mongo/companies/models/Company.js";
 
 /**

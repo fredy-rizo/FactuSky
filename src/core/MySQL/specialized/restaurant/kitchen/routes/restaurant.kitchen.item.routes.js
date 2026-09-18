@@ -15,7 +15,7 @@ import {
   serve_restaurant_kitchen_item,
   start_restaurant_kitchen_item,
   update_restaurant_kitchen_notes,
-} from "../models/restaurant.kitchen.item.controllers.js";
+} from "../controllers/restaurant.kitchen.item.controllers.js";
 const router = Router();
 
 router.post(
