@@ -103,17 +103,17 @@ export class RestaurantReservation {
         rt.table_number,
         rt.name AS table_name,
 
-        c.name AS customer_name_general
+        c.first_name AS customer_name_general
 
       FROM restaurant_reservations rr
 
       LEFT JOIN restaurant_tables rt
         ON rt.id = rr.table_id
         AND rt.company_id = rr.company_id
-      
+
       LEFT JOIN customers c
         ON c.id = rr.customer_id
-      
+
       WHERE rr.id = ?
       AND rr.company_id = ?
 
@@ -217,14 +217,14 @@ export class RestaurantReservation {
       FROM restaurant_tables rt
 
       WHERE rt.company_id = ?
-      AND rt.active = 1
-      AND rt.capaty >= ?
+      AND rt.status = "available"
+      AND rt.capacity >= ?
 
       AND rt.id NOT IN
       (
         SELECT rr.table_id
 
-        FROM restaurant_resertions rr
+        FROM restaurant_reservations rr
 
         WHERE rr.company_id = ?
         AND rr.reservation_date = ?
@@ -278,28 +278,32 @@ export class RestaurantReservation {
     if (!["pending", "confirmed"].includes(current.status))
       throw new Error("Esta reserva ya no puede modificarse");
 
-    if (!table_id) {
+    if (table_id) {
       const [conflicts] = await db.execute(
         `
-        SELECT id
-        FROM restaurant_reservations
+          SELECT id
+          FROM restaurant_reservations
 
-        WHERE company_id = ?
-        AND table_id = ?
-        AND reservation_date = ?
-        AND status IN
-          ('pending','confirmed','arrived')
-        AND id != ?
-        LIMIT 1
-        `,
+          WHERE company_id = ?
+          AND table_id = ?
+          AND reservation_date = ?
+          AND reservation_time = ?
+          AND status IN
+            ('pending', 'confirmed', 'arrived')
+          AND id != ?
+
+          LIMIT 1
+          `,
         [company_id, table_id, reservation_date, reservation_time, id],
       );
 
-      if (conflicts.length)
-        throw new Error("La mesa ya esta reservada para esa fecha y hora");
+      if (conflicts.length) {
+        throw new Error("La mesa ya está reservada para esa fecha y hora");
+      }
+    }
 
-      const [result] = await db.execute(
-        `
+    const [result] = await db.execute(
+      `
         UPDATE restaurant_reservations
         SET
           customer_id = ?,
@@ -307,28 +311,27 @@ export class RestaurantReservation {
           reservation_date = ?,
           reservation_time = ?,
           party_size = ?,
-          customer_id = ?,
+          customer_name = ?,
           customer_phone = ?,
           notes = ?
 
         WHERE id = ?
         AND company_id = ?
         `,
-        [
-          customer_id || null,
-          table_id || null,
-          reservation_date,
-          reservation_time,
-          party_size,
-          customer_name || null,
-          customer_phone || null,
-          notes || null,
-          id,
-          company_id,
-        ],
-      );
-      return result;
-    }
+      [
+        customer_id || null,
+        table_id || null,
+        reservation_date,
+        reservation_time,
+        party_size,
+        customer_name || null,
+        customer_phone || null,
+        notes || null,
+        id,
+        company_id,
+      ],
+    );
+    return result;
   }
 
   static async confirm(id, company_id) {

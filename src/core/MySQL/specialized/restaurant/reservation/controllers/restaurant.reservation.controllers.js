@@ -123,3 +123,187 @@ export const list_restaurant_reservations_by_date = async (req, res) => {
     res.status(500).json(err);
   }
 };
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const restaurant_reservation_availability = async (req, res) => {
+  try {
+    const { company_id } = req.params;
+    const { reservation_date, reservation_time, party_size, table_id } =
+      req.query;
+
+    await validate_company(company_id);
+
+    if (!reservation_date || !reservation_time || !party_size)
+      return res.status(400).json({
+        status: false,
+        message: "Fecha, hora y cantidad de personas son requeridas",
+      });
+
+    const data = await RestaurantReservation.checkAvailability(
+      company_id,
+      reservation_date,
+      reservation_time,
+      Number(party_size),
+      table_id || null,
+    );
+    res.status(200).json({
+      status: true,
+      message: "Disponibilidad consultada correctamente",
+      data,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const update_restaurant_reservation = async (req, res) => {
+  try {
+    const { company_id, id } = req.params;
+
+    await validate_company(company_id);
+
+    const reservation = await RestaurantReservation.findById(id, company_id);
+    if (!reservation)
+      return res
+        .status(404)
+        .json({ status: false, message: "Reserva no encontrada" });
+
+    await RestaurantReservation.update(id, company_id, req.body);
+
+    const data = await RestaurantReservation.findById(id, company_id);
+    res.status(200).json({
+      status: true,
+      message: "Reserva actualizada correctamente",
+      data,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const confirm_restaurant_reservation = async (req, res) => {
+  try {
+    const { company_id, id } = req.params;
+
+    await validate_company(company_id);
+
+    const reservation = await RestaurantReservation.findById(id, company_id);
+    if (!reservation)
+      return res
+        .status(404)
+        .json({ status: false, message: "Reserva no encontrada" });
+
+    await RestaurantReservation.confirm(id, company_id);
+
+    const data = await RestaurantReservation.findById(id, company_id);
+    res.status(200).json({
+      status: true,
+      message: "Reserva confirmada correctamente",
+      data,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const arrive_restaurant_reservation = async (req, res) => {
+  try {
+    const { company_id, id } = req.params;
+
+    await validate_company(company_id);
+
+    const reservation = await RestaurantReservation.findById(id, company_id);
+    if (!reservation)
+      return res
+        .status(404)
+        .json({ status: false, message: "Reserva no encontrada" });
+
+    await RestaurantReservation.arrive(id, company_id);
+
+    const data = await RestaurantReservation.findById(id, company_id);
+    res
+      .status(200)
+      .json({ status: true, message: "Cliente marcado como llegado", data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const cancel_restaurant_reservation = async (req, res) => {
+  try {
+    const { company_id, id } = req.params;
+
+    await validate_company(company_id);
+
+    const reservation = await RestaurantReservation.findById(id, company_id);
+    if (!reservation)
+      return res
+        .status(404)
+        .json({ status: false, message: "Reserva no encontrada" });
+
+    await RestaurantReservation.cancel(id, company_id);
+    res
+      .status(200)
+      .json({ status: true, message: "Reserva cancelada correctamente" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+
+export const no_show_restaurant_reservation = async (req, res) => {
+  try {
+    const { company_id, id } = req.params;
+
+    await validate_company(company_id);
+
+    const reservation = await RestaurantReservation.findById(id, company_id);
+    if (!reservation)
+      return res
+        .status(404)
+        .json({ status: false, message: "Reserva no encontrada" });
+
+    await RestaurantReservation.noShow(id, company_id);
+
+    const data = await RestaurantReservation.findById(id, company_id);
+    res
+      .status(200)
+      .json({ status: true, message: "Reserva marcada como no-show", data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+};
