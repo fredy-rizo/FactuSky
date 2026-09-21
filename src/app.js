@@ -43,6 +43,7 @@ import RestaurantOrder from "./core/MySQL/specialized/restaurant/orders/routes/r
 import RestaurantKitchenItem from "./core/MySQL/specialized/restaurant/kitchen/routes/restaurant.kitchen.item.routes.js";
 import RestaurantBilling from "./core/MySQL/specialized/restaurant/billing/routes/restaurant.billing.routes.js";
 import RestaurantReservation from "./core/MySQL/specialized/restaurant/reservation/routes/restaurant.reservation.routes.js";
+import RestaurantQrCode from "./core/MySQL/specialized/restaurant/qr/routes/restaurant.qr.routes.js";
 
 const app = express();
 
@@ -95,5 +96,6 @@ app.use("/api/restaurant-order", RestaurantOrder);
 app.use("/api/restaurant-kitchen", RestaurantKitchenItem);
 app.use("/api/restaurant-billing", RestaurantBilling);
 app.use("/api/restaurant-reservation", RestaurantReservation);
+app.use("/api/resturant-qr-code", RestaurantQrCode);
 
 export default app;
