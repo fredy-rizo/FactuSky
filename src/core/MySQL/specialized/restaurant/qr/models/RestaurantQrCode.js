@@ -338,4 +338,16 @@ export class RestaurantQrCode {
       connection.release();
     }
   }
+
+  static async count(company_id) {
+    const [rows] = await db.execute(
+      `
+      SELECT COUNT(*) AS count
+      FROM restaurant_qr_codes
+      WHERE company_id
+      `,
+      [company_id],
+    );
+    return Number(rows[0].count);
+  }
 }
