@@ -208,48 +208,48 @@ export class RestaurantTableSession {
 
     try {
       await connection.beginTransaction();
+
       const [sessionRows] = await connection.execute(
         `
-        SELECT *
-        FROM restaurant_table_sessions
-        WHERE id = ?
-        AND company_id = ?
-        FOR UPDATE
-        `,
+      SELECT *
+      FROM restaurant_table_sessions
+      WHERE id = ?
+      AND company_id = ?
+      FOR UPDATE
+      `,
         [id, company_id],
       );
 
       if (!sessionRows.length) throw new Error("Sesion no encontrada");
 
       const session = sessionRows[0];
-      if (session.status !== "open") throw new Error("La sesion no abierta");
+      if (session.status !== "open")
+        throw new Error("La sesion no está abierta");
 
-      // Cerrar sesion
+      // 1. Liberar la mesa (usando table_id de la sesión)
       await connection.execute(
         `
-        UPDATE restaurant_tables
-        SET
-          status = 'closed',
-          closed_at = NOW()
-        WHERE id = ?
-        AND company_id = ?
-        AND status = 'open'
-        `,
-        [id, company_id],
+      UPDATE restaurant_tables
+      SET status = 'available'
+      WHERE id = ?
+      AND company_id = ?
+      AND status = 'occupied'
+      `,
+        [session.table_id, company_id], // ✅ Usamos table_id, no id
       );
 
-      // Liberar mesa
+      // 2. Cerrar la sesión (usando id de la sesión)
       await connection.execute(
         `
-        UPDATE restaurant_table_sessions
-        SET
-          status = 'closed'
-          closed_at = NOW()
-        WHERE id = ?
-        AND company_id = ?
-        AND status = 'open'
-        `,
-        [session.table_id, company_id],
+      UPDATE restaurant_table_sessions
+      SET
+        status = 'closed',  
+        closed_at = NOW()
+      WHERE id = ?               
+      AND company_id = ?
+      AND status = 'open'    
+      `,
+        [id, company_id], // ✅ id es el de la sesión
       );
 
       await connection.commit();
