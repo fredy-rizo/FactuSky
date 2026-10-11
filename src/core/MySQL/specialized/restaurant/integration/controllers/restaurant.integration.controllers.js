@@ -12,7 +12,8 @@ export const create_restaurant_sale = async (req, res) => {
     const { user_id, payment_method_id, cash_opening_id } = req.body;
 
     const company = await Company.findById(company_id);
-    if (!company) return res.status(400).json(err);
+    if (!company)
+      return res.status(400).json({ message: "Empresa no encontrada" });
 
     if (!cash_opening_id)
       return res.status(400).json({

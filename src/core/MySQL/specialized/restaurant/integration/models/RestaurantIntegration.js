@@ -13,7 +13,6 @@ export class RestaurantIntegration {
     try {
       await connection.beginTransaction();
 
-      // 1. Obtener orden
       const [orderRows] = await connection.execute(
         `
         SELECT *
@@ -31,19 +30,16 @@ export class RestaurantIntegration {
 
       const order = orderRows[0];
 
-      // 2. Validar estado
       if (!["served", "ready"].includes(order.status)) {
         throw new Error(
           "La orden debe estar lista o servida para generar la venta",
         );
       }
 
-      // 3. Evitar doble facturación
       if (order.sale_id) {
         throw new Error("Esta orden ya tiene una venta asociada");
       }
 
-      // 4. Obtener items
       const [items] = await connection.execute(
         `
         SELECT
@@ -62,7 +58,6 @@ export class RestaurantIntegration {
         throw new Error("La orden no contiene productos");
       }
 
-      // 5. Crear venta
       const [saleResult] = await connection.execute(
         `
         INSERT INTO sales
@@ -103,8 +98,6 @@ export class RestaurantIntegration {
       );
 
       const sale_id = saleResult.insertId;
-
-      // 6. Crear sale_items
       for (const item of items) {
         await connection.execute(
           `
@@ -134,7 +127,6 @@ export class RestaurantIntegration {
         );
       }
 
-      // 7. Registrar movimiento de inventario (sin warehouse)
       for (const item of items) {
         const qty = Number(item.quantity) || 0;
 
@@ -158,7 +150,7 @@ export class RestaurantIntegration {
           [
             company_id,
             item.product_id,
-            null, // ✅ warehouse_id es null porque el flujo de restaurante no lo usa
+            null,
             "exit",
             qty,
             0,
@@ -170,7 +162,6 @@ export class RestaurantIntegration {
         );
       }
 
-      // 8. Registrar movimiento de caja
       if (!cash_opening_id) {
         throw new Error("cash_opening_id es requerido para registrar el pago");
       }
@@ -206,7 +197,6 @@ export class RestaurantIntegration {
         ],
       );
 
-      // 9. Actualizar orden
       await connection.execute(
         `
         UPDATE restaurant_orders
