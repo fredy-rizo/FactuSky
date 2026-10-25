@@ -45,6 +45,7 @@ import RestaurantBilling from "./core/MySQL/specialized/restaurant/billing/route
 import RestaurantReservation from "./core/MySQL/specialized/restaurant/reservation/routes/restaurant.reservation.routes.js";
 import RestaurantQrCode from "./core/MySQL/specialized/restaurant/qr/routes/restaurant.qr.routes.js";
 import RestaurantIntegration from "./core/MySQL/specialized/restaurant/integration/routes/restaurant.integration.routes.js";
+import HotelRoomType from "./core/MySQL/specialized/hotel/HotelRoomType/routes/hotel.room.types.routes.js";
 
 const app = express();
 
@@ -99,5 +100,6 @@ app.use("/api/restaurant-billing", RestaurantBilling);
 app.use("/api/restaurant-reservation", RestaurantReservation);
 app.use("/api/resturant-qr-code", RestaurantQrCode);
 app.use("/api/restaurant-integration", RestaurantIntegration);
+app.use("/api/hotel-room-type", HotelRoomType);
 
 export default app;

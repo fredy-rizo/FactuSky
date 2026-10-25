@@ -1,4 +1,6 @@
 node_modules
+frontend/dist
+frontend/tsconfig.tsbuildinfo
 /storage
 .env
 fases.tex

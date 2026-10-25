@@ -19,7 +19,8 @@ router.get(
 router.get(
   "/sale/:company_id/summary",
   TokenAny,
-  TokenPermissions("reports", "view", sales_summary),
+  TokenPermissions("reports", "view"),
+  sales_summary,
 ); // Ventas
 
 export default router;

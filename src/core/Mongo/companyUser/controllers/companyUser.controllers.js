@@ -118,7 +118,7 @@ export const login = async (req, res) => {
         .json({ status: false, message: "Campos requeridos" });
 
     const data_user = await CompanyUser.findOne({ email: email.toLowerCase() })
-      .populate("company", "name active")
+      .populate("company", "name active business_type")
       .populate("role", "name code permissions active");
     if (!data_user)
       return res
